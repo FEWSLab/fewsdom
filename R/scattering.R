@@ -330,6 +330,7 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
 #' @importFrom zoo na.approx
 #' @importFrom MBA mba.points
 #' @importFrom tidyr gather
+#' @importFrom magrittr %>%
 #' @importFrom parallel makeCluster stopCluster
 #' @import foreach
 #'
@@ -353,7 +354,12 @@ eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
     cat("interpolating missing data in", length(data), "EEMs",
         fill = TRUE)
   }
-  eem_list <- foreach::foreach(i = 1:length(data)) %dopar% {
+  eem_list <- foreach::foreach(i = 1:length(data),
+                               .packages = c("magrittr",
+                                             "dplyr",
+                                             "zoo",
+                                             "MBA",
+                                             "tidyr")) %dopar% {
     eem <- data[[i]]
     if (type == 4) {
       eem$x <- cbind(zoo::na.approx(eem$x, ...), t(zoo::na.approx(t(eem$x),

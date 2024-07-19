@@ -29,13 +29,16 @@ Imports:
     gridExtra,
     reader,
     readxl,
-    staRdom
-RoxygenNote: 7.2.3
+    staRdom,
+    magrittr
+RoxygenNote: 7.3.2
 LazyData: true
 Depends: 
     R (>= 2.10)
 URL: https://katiewampler.github.io/fewsdom/
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: rmarkdown
+Config/testthat/edition: 3
