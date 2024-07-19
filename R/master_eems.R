@@ -52,6 +52,10 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   meta_file <- paste(prjpath,"/", meta_name, sep="")
 
   if(get_doc == T){
+
+    # Add code to append prjpath to DOC file (in case it's a relative path)
+    doc_file <- file.path(prjpath,
+                          doc_file)
     meta <- get_doc(doc_file=doc_file,
                     doc_sheet=doc_sheet, doc_column=doc_column,
                     name_column=name_column, nskip=nskip,
