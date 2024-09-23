@@ -93,6 +93,10 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   X_clean <- data_process[[1]]  #returns non doc normalized data
   abs_clean <- data_process[[2]]
 
+  ## Validation checks on the EEMs and Absorbance data
+  # These will raise warnings if some of the absorbances are weird or if the
+
+
   ## Report the Data
   cat("Reporting EEMs and absorbance data \n")
 

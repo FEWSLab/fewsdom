@@ -185,7 +185,6 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
   return(plot)
 }
 
-
 #' Exports EEMs contour plots to a file
 #'
 #' Will plot EEMs using 'ggeem2' function then will export plots to specified file.
@@ -298,3 +297,6 @@ plot_eems <- function(prjpath, meta, eem, sing_plot=T, sum_plot=T, doc_norm=T,
     suppressWarnings(gridExtra::grid.arrange(grobs = sum_pl, ncol=ncol))
     grDevices::dev.off()}
   }
+
+# TODO Placeholder function to plot the absorbances. These can help check for
+plot_absorbance <- function()
