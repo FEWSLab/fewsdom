@@ -10,7 +10,9 @@ raman(
   raman_width = "auto",
   raman_interp = c(T, T),
   process_file = NULL,
-  verbose = F
+  process_file_name = process_file_name,
+  verbose = F,
+  ...
 )
 }
 \arguments{
