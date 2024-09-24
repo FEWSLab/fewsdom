@@ -131,6 +131,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
 
     X_ife <- eem_inner_filter_effect(X_ife, absorbance=abs)
     if(is.character(process_file_name)){
+      # TODO Could Make this write.table call a function since it's repeated many times
       write.table(paste(Sys.time(), "- EEM's were corrected for inner filter effects", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
     if(length(empty_eems(X_ife, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after correcting for inner filter effects, use 'empty_eems' function to find out which ones")

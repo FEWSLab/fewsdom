@@ -244,23 +244,23 @@ rayleigh <- function(eem, rayleigh_mask=c(20,10,10,10), rayleigh_width="auto", r
   #second order rayleigh, done first in case there is interpolation
     eem_rm <- eem_remove_scattering2(eem=eem, type="rayleigh", order=2, up_width = rayleigh_mask[3], down_width = rayleigh_mask[4])
     if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- Second order raleigh scattering was removed with a ", rayleigh_mask[3]," nm width above and ",
+      write.table(paste(Sys.time(), "- Second order Rayleigh scattering was removed with a ", rayleigh_mask[3]," nm width above and ",
                         rayleigh_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
 
   if(rayleigh_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
   if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- Second order raleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
+    write.table(paste(Sys.time(), "- Second order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
 
   #first order rayleigh
     eem_rm <- eem_remove_scattering2(eem=eem_rm, type="rayleigh", order=1, up_width = rayleigh_mask[1], down_width = rayleigh_mask[2])
     if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- First order raleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
+      write.table(paste(Sys.time(), "- First order Rayleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
                         rayleigh_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
     }
 
   if(rayleigh_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
   if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- First order raleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
+    write.table(paste(Sys.time(), "- First order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
   }}
 
   return(eem_rm)
@@ -301,21 +301,21 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
   if(sum(raman_mask[3:4]) > 0){
     eem_rm <- eem_remove_scattering2(eem=eem, type="raman", order=2, up_width = raman_mask[3], down_width = raman_mask[4])
     if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- Second order raleigh scattering was removed with a ", raman_mask[3]," nm width above and ",
+      write.table(paste(Sys.time(), "- Second order Raman scattering was removed with a ", raman_mask[3]," nm width above and ",
                         raman_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
   if(raman_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
   if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- Second order raleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
+    write.table(paste(Sys.time(), "- Second order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
 
   #first order raman
     eem_rm <- eem_remove_scattering2(eem=eem_rm, type="raman", order=1, up_width = raman_mask[1], down_width = raman_mask[2])
     if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- First order raleigh scattering was removed with a ", raman_mask[1]," nm width above and ",
+      write.table(paste(Sys.time(), "- First order Raman scattering was removed with a ", raman_mask[1]," nm width above and ",
                         raman_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
 
   if(raman_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
   if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- First order raleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
+    write.table(paste(Sys.time(), "- First order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
   }
 
   eem_rm
