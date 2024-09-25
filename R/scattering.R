@@ -246,24 +246,24 @@ rayleigh <- function(eem, rayleigh_mask=c(20,10,10,10), rayleigh_width="auto",
 
   #second order rayleigh, done first in case there is interpolation
     eem_rm <- eem_remove_scattering2(eem=eem, type="rayleigh", order=2, up_width = rayleigh_mask[3], down_width = rayleigh_mask[4])
-    if(process_file == T){
-      write.table(paste(Sys.time(), "- Second order raleigh scattering was removed with a ", rayleigh_mask[3]," nm width above and ",
-                        rayleigh_mask[4], " nm width below", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+    if(is.character(process_file)){
+      write.table(paste(Sys.time(), "- Second order Rayleigh scattering was removed with a ", rayleigh_mask[3]," nm width above and ",
+                        rayleigh_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
 
   if(rayleigh_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(process_file == T){
-    write.table(paste(Sys.time(), "- Second order raleigh scattering filled via interpolation", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}}
+  if(is.character(process_file)){
+    write.table(paste(Sys.time(), "- Second order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
 
   #first order rayleigh
     eem_rm <- eem_remove_scattering2(eem=eem_rm, type="rayleigh", order=1, up_width = rayleigh_mask[1], down_width = rayleigh_mask[2])
-    if(process_file == T){
-      write.table(paste(Sys.time(), "- First order raleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
-                        rayleigh_mask[2], " nm width below", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
+    if(is.character(process_file)){
+      write.table(paste(Sys.time(), "- First order Rayleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
+                        rayleigh_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
     }
 
   if(rayleigh_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(process_file == T){
-    write.table(paste(Sys.time(), "- First order raleigh scattering filled via interpolation", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
+  if(is.character(process_file)){
+    write.table(paste(Sys.time(), "- First order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
   }}
 
   return(eem_rm)
@@ -304,22 +304,22 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
   #second order raman, done first for interpolation
   if(sum(raman_mask[3:4]) > 0){
     eem_rm <- eem_remove_scattering2(eem=eem, type="raman", order=2, up_width = raman_mask[3], down_width = raman_mask[4])
-    if(process_file == T){
-      write.table(paste(Sys.time(), "- Second order raman scattering was removed with a ", raman_mask[3]," nm width above and ",
-                        raman_mask[4], " nm width below", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}}
+    if(is.character(process_file)){
+      write.table(paste(Sys.time(), "- Second order Raman scattering was removed with a ", raman_mask[3]," nm width above and ",
+                        raman_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
   if(raman_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(process_file == T){
-    write.table(paste(Sys.time(), "- Second order raman scattering filled via interpolation", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}}
+  if(is.character(process_file)){
+    write.table(paste(Sys.time(), "- Second order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
 
   #first order raman
     eem_rm <- eem_remove_scattering2(eem=eem_rm, type="raman", order=1, up_width = raman_mask[1], down_width = raman_mask[2])
-    if(process_file == T){
-      write.table(paste(Sys.time(), "- First order raman scattering was removed with a ", raman_mask[1]," nm width above and ",
-                        raman_mask[2], " nm width below", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+    if(is.character(process_file)){
+      write.table(paste(Sys.time(), "- First order Raman scattering was removed with a ", raman_mask[1]," nm width above and ",
+                        raman_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
 
   if(raman_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(process_file == T){
-    write.table(paste(Sys.time(), "- First order raman scattering filled via interpolation", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+  if(is.character(process_file)){
+    write.table(paste(Sys.time(), "- First order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
   }
 
   eem_rm
@@ -334,6 +334,7 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
 #' @importFrom zoo na.approx
 #' @importFrom MBA mba.points
 #' @importFrom tidyr gather
+#' @importFrom magrittr %>%
 #' @importFrom parallel makeCluster stopCluster
 #' @import foreach
 #'
@@ -357,7 +358,12 @@ eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
     cat("interpolating missing data in", length(data), "EEMs",
         fill = TRUE)
   }
-  eem_list <- foreach::foreach(i = 1:length(data)) %dopar% {
+  eem_list <- foreach::foreach(i = 1:length(data),
+                               .packages = c("magrittr",
+                                             "dplyr",
+                                             "zoo",
+                                             "MBA",
+                                             "tidyr")) %dopar% {
     eem <- data[[i]]
     if (type == 4) {
       eem$x <- cbind(zoo::na.approx(eem$x, ...), t(zoo::na.approx(t(eem$x),

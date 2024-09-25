@@ -104,6 +104,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   #remove blank that was used as instrument blank so code won't break during plotting
   if(is.null(replace_blank) == F){
     if(process_file == T){
+
       write.table(paste(Sys.time(), "- instrument blank was subsituted for the first run blank", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
     blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
     X_sub <- eem_exclude(X_sub, exclude=list(ex=c(), em=c(), sample=blank$sample) )
@@ -130,11 +131,12 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   if(IFE==T){
     #clip eem to be able to remove inner filtering effects
     X_ife <- eemR::eem_cut(X_mask, em=600:1000, ex=600:1000, exact=F)
-    if(process_file == T){
+    if(is.character(process_file_name)){
       write.table(paste(Sys.time(), "- EEM's were clipped to just emission wavelengths under 600 nm", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
 
     X_ife <- eem_inner_filter_effect(X_ife, absorbance=abs)
-    if(process_file == T){
+    if(is.character(process_file_name)){
+      # TODO Could Make this write.table call a function since it's repeated many times
       write.table(paste(Sys.time(), "- EEM's were corrected for inner filter effects", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
     if(length(empty_eems(X_ife, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after correcting for inner filter effects, use 'empty_eems' function to find out which ones")
@@ -156,7 +158,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
     if(length(empty_eems(X_norm, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after normalizing for raman area, use 'empty_eems' function to find out which ones")
     }
-    if(process_file == T){
+    if(is.character(process_file_name)){
       write.table(paste(Sys.time(), "- EEM's were normalized by raman area", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}}
 
   #account for dilutions
@@ -170,7 +172,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
     })
     class(X_dil_cor) <- "eemlist"
     attr(abs, "is_dil_corrected") <- TRUE
-    if(process_file == T){
+    if(is.character(process_file_name)){
       write.table(paste(Sys.time(), "- EEM's were corrected for dilutions", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
       write.table(paste(Sys.time(), "- Absorbance was corrected for dilutions", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
 
@@ -195,7 +197,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   #clip EEM's  #clips un-normalized eem
   X_clip <- X_dil_cor
   X_clip<- eem_cut2(X_clip, ex=ex_clip, em=em_clip, exact=F)
-  if(process_file == T){
+  if(is.character(process_file_name)){
     write.table(paste(Sys.time(), "- DOC Normalized EEM's were clipped to Excitation:",ex_clip[1]," to ", ex_clip[2],
                       " nm and Emission:",em_clip[1]," to ", em_clip[2], " nm", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
   if(length(empty_eems(X_clip, verbose=F)) >0){
