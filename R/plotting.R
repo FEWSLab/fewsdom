@@ -299,4 +299,4 @@ plot_eems <- function(prjpath, meta, eem, sing_plot=T, sum_plot=T, doc_norm=T,
   }
 
 # TODO Placeholder function to plot the absorbances. These can help check for
-plot_absorbance <- function()
+plot_absorbance <- function() {}

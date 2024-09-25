@@ -1,16 +1,35 @@
 #' Validate Tea Absorbance
 #'
+#' Validates the absorbance of sample tea standards compared to a mean of good
+#' tea standards run in the past on the instrument. Returns an error if the sample
+#' absorbance curve is outside the fail threshold, and a warning if inside the fail
+#' threshold but not fully within historical error bars.
 #'
+#' @section Default tea absorbance model
 #'
-#' @param abs
+#' If model = "default", the model included in the package is used to validate
+#' absorbance. The included model is the repeated absorbance of a 1% Unsweetened
+#' Pure Leaf Black Tea solution created following USGS SRMtea method. See
+#' https://pubs.usgs.gov/of/2018/1096/ofr2018.1096.pdffor further explanation of
+#' SRMtea standard.
+#'
+#' @param abs_df data.frame of sample absorbances from the absorbance_read function
+#' @param model the comparison model of tea absorbance
+#' @param fail_threshold user adjustable threshold to determine failure of the
+#' tea absorbance validation procedure. Must be a decimal between 0 and 1. The value
+#' is the minimum percent of the absorbance curve that is outside the error bar
+#' for validation failure. For example if the value is 0.15, then the check fails
+#' if > 15% of the sample absorbance curve is outside the modeled error bars.
+#' Defaults to 0.10.
 #'
 #' @return
 #' @export
 #'
 #' @examples
 validate_tea_absorbance <- function(abs_df,
-                                    model = "data/tea_absorbance_model.rds",
-                                    fail_threshold = 0.15) {
+                                    model = "default",
+                                    fail_threshold = 0.10,
+                                    ...) {
 
     # Pull out names of tea standard samples
     tea_std_lgl <- grepl("tea",
@@ -21,14 +40,13 @@ validate_tea_absorbance <- function(abs_df,
     stopifnot(any(tea_std_lgl))
 
     # Load in tea absorbance model data.frame
-    if(file_ext(model) == "csv") {
+    if (model == "default") {
+      model_abs <- tea_absorbance_model }
+    else if(file_ext(model) == "csv") {
       model_abs <- read.csv(model)
-    } else if (file_ext(model) == "rds") {
-      model_abs <- readRDS(model)
     } else {
       stop("No valid tea absorbance model found")
     }
-
 
     # Pull out the wavelength vector
     wavelength <- abs_df$wavelength
@@ -47,114 +65,126 @@ validate_tea_absorbance <- function(abs_df,
     lowbound <- test_dataset$sdmin_3x
     hibound <- test_dataset$sdmax_3x
 
+    # Create data structure to store the pct_outside_interval
+    test_results <- data.frame("sample" = character(),
+                               "validation_result" = logical(),
+                               "pct_outside_bounds" = numeric())
+
     # Loop through
     for (sample in tea_names) {
 
+      # Check sample for validation
       sample_abs <- test_dataset[, sample]
       test_low <- (sample_abs - lowbound) > 0 # FALSE if lower than low boundary
       test_hi <- (sample_abs - hibound) < 0   # FALSE if higher than high boundary
       test_pass <- test_low & test_hi
-      test_dataset[, sample] <- test_pass
+      pct_outside_interval <-  1 - (sum(test_pass) / length(test_pass))
 
-      # Throw a warning for any test passes that meet the following conditions
-      pct_inside_interval <- sum(test_pass) / length(test_pass)
-      if (pct_inside_interval == 1) {
-        next
-      } else if(pct_inside_interval < (1 - fail_threshold)) {
+      # Throw a warning for any if the validation check has pct_inside_interval
+      # >= the fail threshold - 1
+      if (pct_outside_interval >= fail_threshold) {
 
-        # Plot the tea absorbance
-        plot_absorbance_error(model_abs,
-                              sample_abs,
-                              sample,
-                              condition = "ERROR")
+        passfail <- "FAIL"
 
-        stop("ERROR: ",
-             sample,
-             " was outside the tea absorbance testing threshold.\n",
-             "Manually check the absorbances to look for Aqualog run errors\n",
-             "See plot for confirmation.")
-      } else {
+        # Throw a warning about the failure and print to console
+        warning("Warning: ",
+            sample,
+            " was outside the absorbance testing threshold.")
+        cat("Warning: ",
+                sample,
+                " was outside the absorbance testing threshold.")
 
-        # Plot the Tea absorbance
+
+        # Plot the Tea absorbance vs the validated model
         plot_absorbance_error(model_abs,
                               sample_abs,
                               sample,
                               condition = "WARNING")
 
-        warning("Warning: ",
-                sample,
-                " was borderline outside the absorbance testing threshold.")
+        # Prompt user for input to accept or decline the warning
+        cont <- readline("Do you wish to accept the warning and continue? [y/n]")
+        # If yes, throw warning and continue
+        if(grepl("y", cont, ignore.case = TRUE)) {
+          if (is.character(process_file_name)) {
+            write.table(paste0(Sys.time(),
+                               " - User warned sample ",
+                               sample,
+                               " FAILED absorbance validation checks, but ok'd to continue"),
+                        process_file_name,
+                        append =TRUE,
+                        quote = FALSE,
+                        row.names = FALSE,
+                        col.names = FALSE)
+            }
+          } else {
+                if(is.character(process_file_name)) {
+                  write.table(paste0(Sys.time(),
+                                     "- Processing Aborted by user. Tea standard failed validation"),
+                                      process_file_name,
+                                      append =TRUE,
+                                      quote = FALSE,
+                                      row.names = FALSE,
+                                      col.names = FALSE)
+                }
+
+          stop("Processing Aborted by user. Tea standard failed validation.")
+          }
+      } else {
+        passfail <- "PASS"
       }
+
+      # Save the results of the test
+      new_result <- data.frame("sample" = sample,
+                                "validation_result" = passfail,
+                                "pct_failed" = pct_outside_interval * 100)
+      test_results <- rbind(test_results, new_result)
+
     }
-    return(test_dataset)
-
+    return(test_results)
 }
 
+#' Plot the absorbance of a failed tea absorbance validation check.
+#'
+#' `validate_tea_absorbance()` uses this function to plot the tea absorbance
+#' validation model vs. the sample tea absorbance that is outside the
+#'
+#' @param model_data tea absorbance model data
+#' @param sample_abs_vector tea sample absorbance vector
+#' @param sample_name name of the tea sample to use as title of plot
+#' @param condition was the failure a warning or an error?
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_absorbance_error <- function(model_data,
+                                  sample_abs_vector,
+                                  sample_name,
+                                  condition) {
+  # Putting the data together
+  all_data <- cbind(model_data, sample_abs_vector)
 
-
-# TODO Function to calculate generic absorbance curve from a bunch of given "good" data
-# Max good absorbance at 239 nm is 0.2166726
-# Min good absorbance at 239 nm is 0.1430418
-# Calculate the mean and standard deviation for each wavelength
-save_tea_absorbance_model <- function(path_to_abs,
-                                      save_path,
-                                      sd_multiplier = 3,
-                                      overwrite = FALSE) {
-  # NOTE: There is a model containing the good data from 2022-08 to 2024-08 saved
-  # withing the package. DO NOT use this function to update the package. Instead,
-  # save the updated model data to T: Drive in:
-  # T:/Aqualog_Data/0_Validation/absorbance/...
-  # Load the "good" absorbance data. These will have to be selected by hand.
-  tea_absorbance <- absorbance_read(path_to_abs)
-
-  # Drop rows with all NA
-  tea_absorbance <- tea_absorbance[tea_absorbance$wavelength <= 791,]
-
-  # Convert data to long for easy summarizing
-  long_data <- tidyr::pivot_longer(tea_absorbance,
-                                   cols = !matches("wavelength"),
-                                   names_to = "sample",
-                                   values_to = "absorbance")
-
-  tea_absorbance_model <- dplyr::group_by(good_data_long,
-                              wavelength) %>%
-  dplyr::summarize(mean_abs_by_wavelength = mean(absorbance),
-                   sd_abs_by_wavelength = sd(absorbance)) %>%
-  dplyr::mutate(sdmin_mult = mean_abs_by_wavelength - sd_multiplier * sd_abs_by_wavelength,
-                sdmax_mult = mean_abs_by_wavelength + sd_multiplier * sd_abs_by_wavelength)
-
-  # Plot good absorbance data with mean and SD ribbon
-  good_abs_plot <- ggplot2::ggplot(data = good_data_long) +
-    ggplot2::geom_line(aes(x = wavelength,
-                  y = absorbance,
-                  color = sample),
-              alpha = 0.1) +
-    ggplot2::geom_line(data = tea_absorbance_model,
-              aes(x = wavelength,
+  # Plotting Code
+  abs_plot <- ggplot(all_data) +
+    geom_line(aes(x = wavelength,
+                  y = sample_abs_vector),
+              color = "red") +
+    geom_line(aes(x = wavelength,
                   y = mean_abs_by_wavelength),
-              linewidth = 1,
-              linetype = "dash",
               color = "black") +
-    ggplot2::geom_ribbon(data = tea_absorbance_model,
-                aes(x = wavelength,
-                    ymin = sdmin_mult,
-                    ymax = sdmax_mult),
-                alpha = 0.2) +
-    ggplot2::theme(legend.position = "none")
+    geom_ribbon(aes(x = wavelength,
+                    ymin = sdmin_3x,
+                    ymax = sdmax_3x),
+                alpha = 0.15) +
+    labs(y = "Absorbance",
+         x = "Wavelength (nm)",
+         title = paste0(sample_name, " - ", condition)) +
+    theme_bw()
 
-  plot(good_abs_plot)
-
-  # Save the good model of tea absorbance as an rds file in data folder
-
-  saveRDS(tea_absorbance_model,
-          file = )
-
-
-
+  plot(abs_plot)
 }
 
 
 
-# TODO Function to validate EEM data for tea standards vs. average of all other "good" tea standards
 
 # TODO Function to calculate generic EEM from a bunch of given "good" data
