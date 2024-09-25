@@ -5,13 +5,15 @@
 #' absorbance curve is outside the fail threshold, and a warning if inside the fail
 #' threshold but not fully within historical error bars.
 #'
-#' @section Default tea absorbance model
+#' @section Default tea absorbance model:
 #'
 #' If model = "default", the model included in the package is used to validate
 #' absorbance. The included model is the repeated absorbance of a 1% Unsweetened
 #' Pure Leaf Black Tea solution created following USGS SRMtea method. See
 #' https://pubs.usgs.gov/of/2018/1096/ofr2018.1096.pdffor further explanation of
 #' SRMtea standard.
+#'
+#' ...
 #'
 #' @param abs_df data.frame of sample absorbances from the absorbance_read function
 #' @param model the comparison model of tea absorbance
@@ -22,10 +24,9 @@
 #' if > 15% of the sample absorbance curve is outside the modeled error bars.
 #' Defaults to 0.10.
 #'
-#' @return
+#' @return returns a data.frame with pass/fail results of tea standard checks
 #' @export
 #'
-#' @examples
 validate_tea_absorbance <- function(abs_df,
                                     model = "default",
                                     fail_threshold = 0.10,
@@ -153,10 +154,9 @@ validate_tea_absorbance <- function(abs_df,
 #' @param sample_name name of the tea sample to use as title of plot
 #' @param condition was the failure a warning or an error?
 #'
-#' @return
+#' @return plot of tea sample absorbance and model of "good" absorbance
 #' @export
 #'
-#' @examples
 plot_absorbance_error <- function(model_data,
                                   sample_abs_vector,
                                   sample_name,
