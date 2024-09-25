@@ -95,7 +95,8 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
 
   ## Validation checks on the EEMs and Absorbance data
   # These will raise warnings if some of the absorbances are weird or if the
-
+  cat("Validating check standards \n")
+  tea_abs_check <- validate_tea_absorbance(abs_clean)
 
   ## Report the Data
   cat("Reporting EEMs and absorbance data \n")

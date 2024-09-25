@@ -11,3 +11,6 @@ README for the validation checks of EEMs data
 
 
 Maybe - can I amalgamate all the known stream water DOC samples to create a known range of absorbance and EEMs for these? This will be more work than doing the tea and blanks.
+
+# TODOs
+-[] make the writing to processing_tracking.txt it's own function to make code easier to read
