@@ -31,12 +31,8 @@ Imports:
     gridExtra,
     reader,
     readxl,
-<<<<<<< HEAD
-    staRdom
-=======
     staRdom,
     magrittr
->>>>>>> tests
 RoxygenNote: 7.3.2
 LazyData: true
 Depends: 
