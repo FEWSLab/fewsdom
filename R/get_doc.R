@@ -33,10 +33,22 @@ get_doc <- function(doc_file, doc_sheet=NULL, doc_column, name_column, nskip=0, 
 
   #read in doc data
     if(stringr::str_detect(doc_file, ".xlsx")){
-      doc_result <- openxlsx::readWorkbook(doc_file, sheet=doc_sheet,
-                                           startRow = nskip+1, detectDates = T)
+      doc_result <- tryCatch(
+        {openxlsx::readWorkbook(doc_file, sheet=doc_sheet,
+                                           startRow = nskip+1, detectDates = T)},
+        error = function(e){
+          stop(paste("ERROR: Could not open XLSX DOC file",
+                     "\n",
+                     e))
+      })
     } else{
-      doc_result <- read.csv(doc_file, skip = nskip)
+      doc_result <- tryCatch(
+        {read.csv(doc_file, skip = nskip)},
+          error = function(e){
+            stop(paste("ERROR: Could not open CSV DOC file",
+                       "\n",
+                       e))
+          })
     }
 
   #condense to just DOC data

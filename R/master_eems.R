@@ -53,6 +53,10 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   meta_file <- paste(prjpath,"/", meta_name, sep="")
 
   if(get_doc == T){
+
+    # Add code to append prjpath to DOC file (in case it's a relative path)
+    doc_file <- file.path(prjpath,
+                          doc_file)
     meta <- get_doc(doc_file=doc_file,
                     doc_sheet=doc_sheet, doc_column=doc_column,
                     name_column=name_column, nskip=nskip,
@@ -89,6 +93,11 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
                                process_file=process_file, meta=meta, replace_blank=replace_blank, ...)
   X_clean <- data_process[[1]]  #returns non doc normalized data
   abs_clean <- data_process[[2]]
+
+  ## Validation checks on the EEMs and Absorbance data
+  # These will raise warnings if some of the absorbances are weird or if the
+  cat("Validating check standards \n")
+  tea_abs_check <- validate_tea_absorbance(abs_clean)
 
   ## Report the Data
   cat("Reporting EEMs and absorbance data \n")

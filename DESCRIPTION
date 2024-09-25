@@ -1,12 +1,14 @@
 Package: fewsdom
 Type: Package
 Title: Tools to Process Data from Horiba Aqualog
-Version: 1.1.4
-Authors@R: person("Katie A.", "Wampler", email = "katie.wampler@oregonstate.edu",
-  role = c("aut", "cre"))
+Version: 1.2.1
+Authors@R: c(
+  person("Katie A.", "Wampler", email = "katie.wampler@oregonstate.edu", role = c("aut")),
+  person("Ryan", "Cole", email = "ryan.cole@oregonstate.edu", role = c("aut", "cre"))
+  )
 Description: Collection of functions used to process raw data collected 
     from a Horiba Aqualog, output cleaned data, indicies, and plots.
-Date: 2023-02-02
+Date: 2024-09-25
 License: GPL-3
 Encoding: UTF-8
 Imports:
@@ -29,13 +31,20 @@ Imports:
     gridExtra,
     reader,
     readxl,
+<<<<<<< HEAD
     staRdom
+=======
+    staRdom,
+    magrittr
+>>>>>>> tests
 RoxygenNote: 7.3.2
 LazyData: true
 Depends: 
     R (>= 2.10)
-URL: https://katiewampler.github.io/fewsdom/
+URL: https://github.com/FEWSLab/fewsdom/
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: rmarkdown
+Config/testthat/edition: 3
