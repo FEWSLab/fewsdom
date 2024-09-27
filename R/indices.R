@@ -499,6 +499,7 @@ get_indices <- function(eem_list, abs_data, meta, prjpath,doc_norm="both", samps
   wb <- openxlsx::createWorkbook(wb_name)
   openxlsx::addWorksheet(wb, "README")
   openxlsx::writeData(wb,"README", documentation, colNames = F)
+  browser()
   openxlsx::saveWorkbook(wb,wb_name,overwrite = TRUE)
 
   #get flourescence data
