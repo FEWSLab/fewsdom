@@ -11,8 +11,7 @@ get_indices(
   prjpath,
   doc_norm = "both",
   sampsascol = F,
-  waves = NULL,
-  cuvle = 1
+  waves = NULL
 )
 }
 \arguments{
@@ -29,8 +28,6 @@ get_indices(
 \item{sampsascol}{a logical indicating how results should be oriented, TRUE puts samples as columns, FALSE puts samples as rows}
 
 \item{waves}{optional, a vector of wavelengths in nm to extract from the absorbance data}
-
-\item{cuvle}{the length of the cuvette in cm}
 }
 \description{
 Uses 'eem_coble_peaks2' and 'abs_parm' functions to obtain absorbance and
