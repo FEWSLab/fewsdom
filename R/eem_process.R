@@ -12,7 +12,7 @@
 #' @param abs dataframe containing absorbance data corresponding to the EEMs samples
 #' @param meta dataframe of metadata containing unique ID's, integration time, dilutions, and raman area for each sample, see example metadata for format
 #' @param process_file logical, if TRUE it will put a text file in the processed data folder named 'processing_tracking'
-#' @param replace_blank logical, if TRUE it will find the first sample labeled "blank" or "blk" and use that for blank subtraction, use when instrument blank has errors
+#' @param replace_blank a character giving the data identifier of the sample that should be used for blank subtraction
 #' @param raman logical, if TRUE will use 'raman' function to remove raman scattering
 #' @param rayleigh logical, if TRUE will use 'rayleigh' function to remove rayleigh scattering
 #' @param IFE logical, if TRUE will use absorbance data to remove inner filter effects
@@ -38,7 +38,7 @@
 #' abs_clean <- data_process[[2]]}
 
 eem_proccess <- function(prjpath, eemlist, blanklist, abs,
-                         meta, process_file=T, replace_blank=F,
+                         meta, process_file=T, replace_blank=NULL,
                          raman=T, rayleigh=T, IFE=T, raman_norm=T,
                          dilute = T, ex_clip = c(247,450),
                          em_clip = c(247,600),
@@ -48,7 +48,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   dilution <- NULL
   stopifnot(is.character(prjpath) | .is_eemlist(eemlist) | .is_eem(eemlist) |
               .is_eemlist(blanklist) | .is_eem(blanklist)| is.data.frame(abs)|
-              is.logical(process_file)| is.logical(replace_blank)|is.logical(raman)|
+              is.logical(process_file)|is.logical(raman)|
               is.logical(rayleigh)|is.logical(IFE)|is.logical(raman_norm)|
               is.logical(dilute)|is.numeric(em_clip)|is.numeric(ex_clip)|file.exists(prjpath))
 
@@ -80,9 +80,8 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   X_sub <- eemlist
   X_sub <- lapply(1:length(X_sub), function(n, replace_blank){
     eem <- eemlist[[n]]
-    if(replace_blank == T){
-      blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
-      warning("Instrument blank was substituted for the first sample blank.")
+    if(is.null(replace_blank) == F){
+      blank <- eemlist[[which(stringr::str_detect(meta$data_identifier, replace_blank) == T)]]
     } else{
       blank <- blanklist[[n]]
     }
@@ -94,13 +93,18 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   if(length(empty_eems(X_sub, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after blank subtraction, use 'empty_eems' function to find out which ones")
   }
-  if(is.character(process_file_name)){
-    write.table(paste(Sys.time(), "- blanks were subtracted from samples", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
+  if(process_file == T){
+    if(is.null(replace_blank) == F){
+      warning(paste("Instrument blank was replaced with sample:", replace_blank))
+      write.table(paste(Sys.time(), "- sample ", replace_blank, " was used for blank subtraction", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
+    }
+      write.table(paste(Sys.time(), "- blanks were subtracted from samples", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
   }
 
   #remove blank that was used as instrument blank so code won't break during plotting
-  if(replace_blank ==T){
-    if(is.character(process_file_name)){
+  if(is.null(replace_blank) == F){
+    if(process_file == T){
+
       write.table(paste(Sys.time(), "- instrument blank was subsituted for the first run blank", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
     blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
     X_sub <- eem_exclude(X_sub, exclude=list(ex=c(), em=c(), sample=blank$sample) )
@@ -109,13 +113,14 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   #remove raman scattering
   X_mask <- X_sub
   if(raman==T){
-    X_mask <- raman(X_mask, process_file=process_file_name, raman_width=raman_width,
+    X_mask <- raman(X_mask, process_file=process_file, process_file_name=process_file_name,
+                    raman_width=raman_width,
                     raman_mask = raman_mask,...)
   }
 
   #remove rayleigh scattering
   if(rayleigh ==T){
-    X_mask <- rayleigh(X_mask, process_file=process_file_name,
+    X_mask <- rayleigh(X_mask, process_file=process_file, process_file_name=process_file_name,
                        rayleigh_width = rayleigh_width, rayleigh_mask=rayleigh_mask,...)
   }
   if(length(empty_eems(X_mask, verbose=F)) >0){
@@ -159,6 +164,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   #account for dilutions
   X_dil_cor <- X_norm
   Sabs_dil_cor <- abs
+
   if(dilute == T){
     X_dil_cor <- lapply(1:length(X_dil_cor), function(x){
       attr(X_dil_cor[[x]], "is_dil_corrected") <- TRUE
@@ -174,14 +180,14 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
       dil_data <- meta %>% select(dilution) #invert to match function
       if(mean(unlist(dil_data), na.rm=T) < 1){dil_data <- 1 / dil_data
       warning("Inverted dilutions to be dilution factor")}
-
-      X_dil_cor <- X_dil_cor %>% staRdom::eem_dilution(dil_data)
+      X_dil_cor <- staRdom::eem_dilution(X_dil_cor, dil_data)
 
       #correct absorbance for dilution
       for(x in 1:nrow(meta)){
         dil_fact <- meta$dilution[x]
-        if(dil_fact < 1){dil_fact <- 1 / dil_fact }
-        Sabs_dil_cor[,meta$abs_col[x]] <- abs[,meta$abs_col[x]] * dil_fact}
+        if(dil_fact < 1){dil_fact <- 1 / dil_fact}
+        col_num <- grep(meta$data_identifier[x], colnames(Sabs_dil_cor))
+        Sabs_dil_cor[,col_num] <- abs[,col_num] * dil_fact}
     }
   }
   if(length(empty_eems(X_dil_cor, verbose=F)) >0){
