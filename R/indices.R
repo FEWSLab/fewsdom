@@ -62,7 +62,7 @@ abs_parm <- function(abs_data, waves=NULL, meta, keep_all=F, cuvle = 1){
   data$wavelength <- 249:791
 
   #build data table to put in data
-  abs_out <- as.data.frame(matrix(nrow=(ncol(abs_data)-1), ncol=(15 + length(waves))))
+  abs_out <- as.data.frame(matrix(nrow=(ncol(abs_data)-1), ncol=(14 + length(waves))))
   colnam <- c("sample", paste("SUVA", c(254,280, 350, 370), sep=""), paste("SVA", c(412,440,480,510,532,555), sep=""), "S275_295", "S350_400", "SR")
   if(length(waves) > 0){
     colnam <- c(colnam, paste("a", waves, sep=""))
@@ -108,19 +108,24 @@ abs_parm <- function(abs_data, waves=NULL, meta, keep_all=F, cuvle = 1){
   #abs_out$E4_E6[abs_out$a665 <= noise_val] <- NA
 
   #get ratios
-  S275_295 <- sapply(lapply(data[,-ncol(data)]*log(10)*100/cuvle, staRdom:::abs_fit_slope,
+  S275_295 <- sapply(lapply(data[,-ncol(data)]*log(10)*100/cuvle,
+                            staRdom:::abs_fit_slope,
                             wl=data$wavelength, lim=c(275, 295),
-                            l_ref=275), function(res) res$coefficients)
+                            l_ref=275),
+                     function(res) res$coefficients)
 
-  S350_400 <- sapply(lapply(data[,-ncol(data)]*log(10)*100/cuvle, staRdom:::abs_fit_slope,
+  S350_400 <- sapply(lapply(data[,-ncol(data)]*log(10)*100/cuvle,
+                            staRdom:::abs_fit_slope,
                             wl=data$wavelength, lim=c(350, 400),
-                            l_ref=350), function(res) res$coefficients)
+                            l_ref=350),
+                     function(res) res$coefficients)
 
 
   abs_out$S275_295 <- as.numeric(S275_295)
   abs_out$S350_400 <- as.numeric(S350_400)
 
   abs_out$SR <- abs_out$S275_295 / abs_out$S350_400
+
 
   #remove samples missing DOC
   if(keep_all == F){
