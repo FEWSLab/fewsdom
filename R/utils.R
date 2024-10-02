@@ -108,8 +108,8 @@ create_files <- function(prjpath){
 .OSU_excel <- function(file, sheet_name, df, sampsascol){
   wb <- openxlsx::loadWorkbook(file)
   openxlsx::addWorksheet(wb, sheet_name)
-  openxlsx::writeData(wb,sheet_name, df, rowNames = sampsascol)
   browser()
+  openxlsx::writeData(wb,sheet_name, df, rowNames = sampsascol)
   openxlsx::saveWorkbook(wb,file,overwrite = TRUE)
 }
 
