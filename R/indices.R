@@ -401,9 +401,7 @@ get_indices <- function(eem_list, abs_data, meta, prjpath,doc_norm="both",
               is.character(prjpath) | is.logical(sampsascol) | file.exists(prjpath))
 
   #information to put with peaks
-  documentation <- data.frame(c("Peaks extracted using fewsdom package in R.",
-                                "For peak definitions see 'eem_coble_peaks2' and 'abs_parm' functions in the fewsdom package.",
-                                "The package can be downloaded from https://github.com/katiewampler/fewsdom"))
+  documentation <- .document_indices()
 
   #saving location
   if(file.exists(paste(prjpath,  "/5_Processed", sep=""))==F){
