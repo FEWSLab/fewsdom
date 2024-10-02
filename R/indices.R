@@ -126,7 +126,6 @@ abs_parm <- function(abs_data, waves=NULL, meta, keep_all=F, cuvle = 1){
 
   abs_out$SR <- abs_out$S275_295 / abs_out$S350_400
 
-
   #remove samples missing DOC
   if(keep_all == F){
     abs_out <- abs_out[is.na(abs_out$DOC_mgL) ==F,]
