@@ -37,35 +37,41 @@
 #' X_clean <- data_process[[1]]
 #' abs_clean <- data_process[[2]]}
 
-eem_proccess <- function(prjpath, eemlist, blanklist, abs,
-                         meta, process_file=T, replace_blank=F,
-                         raman=T, rayleigh=T, IFE=T, raman_norm=T,
-                         dilute = T, ex_clip = c(247,450),
+eem_proccess <- function(prjpath,
+                         eemlist,
+                         blanklist,
+                         abs,
+                         meta,
+                         replace_blank=F,
+                         raman=T,
+                         rayleigh=T,
+                         IFE=T,
+                         raman_norm=T,
+                         dilute = T,
+                         ex_clip = c(247,450),
                          em_clip = c(247,600),
-                         raman_width ="auto", raman_mask= c(8,8,1.5,1.5),
-                         rayleigh_width="manual", rayleigh_mask = c(20,10,10,10),
+                         raman_width ="auto",
+                         raman_mask= c(8,8,1.5,1.5),
+                         rayleigh_width="manual",
+                         rayleigh_mask = c(20,10,10,10),
                          ...){
   dilution <- NULL
   stopifnot(is.character(prjpath) | .is_eemlist(eemlist) | .is_eem(eemlist) |
               .is_eemlist(blanklist) | .is_eem(blanklist)| is.data.frame(abs)|
-              is.logical(process_file)| is.logical(replace_blank)|is.logical(raman)|
+              is.logical(replace_blank)|is.logical(raman)|
               is.logical(rayleigh)|is.logical(IFE)|is.logical(raman_norm)|
               is.logical(dilute)|is.numeric(em_clip)|is.numeric(ex_clip)|file.exists(prjpath))
 
-  #make sure file directory is good
-  if(file.exists(paste(prjpath,  "/5_Processed", sep=""))==F){
+  # Make sure file directory is good
+  if(!file.exists(paste(prjpath,  "/5_Processed", sep=""))){
     stop("Invalid file structure, please use 'create_files' function to create file for plots within file directory")
   }
 
-  #create text file to track processing changes
-  if(process_file==T){
-    process_file_name <- paste(prjpath, "/5_Processed/processing_tracking.txt", sep="")
-    file.create(process_file_name)
-    write.table(paste("PROCESSING STEPS ON ", Sys.Date(), sep=""), process_file_name, append=F, quote=F, row.names = F, col.names = F)
-  }else{
-    process_file_name <- F}
+  # Create text file to track processing changes
+  .write_processing_tracking("",
+                             overwrite = TRUE)
 
-  #create attributes to track processing
+  # Create attributes to track processing ----
   eemlist <- lapply(1:length(eemlist), function(i) {
     attr(eemlist[[i]], "is_doc_normalized") <- FALSE
     return(eemlist[[i]])})
@@ -76,7 +82,7 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   attr(abs, "is_doc_normalized") <- FALSE
   attr(abs, "is_dil_corrected") <- FALSE
 
-  #subtract blank
+  # Subtract blank ----
   X_sub <- eemlist
   X_sub <- lapply(1:length(X_sub), function(n, replace_blank){
     eem <- eemlist[[n]]
@@ -94,51 +100,46 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
   if(length(empty_eems(X_sub, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after blank subtraction, use 'empty_eems' function to find out which ones")
   }
-  if(is.character(process_file_name)){
-    write.table(paste(Sys.time(), "- blanks were subtracted from samples", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
-  }
+  .write_processing_tracking("blanks were subtracted from samples")
 
-  #remove blank that was used as instrument blank so code won't break during plotting
+  # Remove blank that was used as instrument blank so code won't break during plotting
   if(replace_blank ==T){
-    if(is.character(process_file_name)){
-      write.table(paste(Sys.time(), "- instrument blank was subsituted for the first run blank", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
     blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
     X_sub <- eem_exclude(X_sub, exclude=list(ex=c(), em=c(), sample=blank$sample) )
+    .write_processing_tracking("instrument blank was subsituted for the first run blank")
   }
 
-  #remove raman scattering
+  # Scattering ----
+  # Remove raman scattering
   X_mask <- X_sub
-  if(raman==T){
+  if(raman){
     X_mask <- raman(X_mask, process_file=process_file_name, raman_width=raman_width,
                     raman_mask = raman_mask,...)
   }
 
-  #remove rayleigh scattering
-  if(rayleigh ==T){
+  # Remove rayleigh scattering
+  if(rayleigh){
     X_mask <- rayleigh(X_mask, process_file=process_file_name,
                        rayleigh_width = rayleigh_width, rayleigh_mask=rayleigh_mask,...)
   }
   if(length(empty_eems(X_mask, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after removing scattering, try setting rayleigh_width to 'manual'")
   }
-  #remove inner filtering effects
+  # Remove inner filtering effects
   X_ife <- X_mask
   if(IFE==T){
     #clip eem to be able to remove inner filtering effects
     X_ife <- eemR::eem_cut(X_mask, em=600:1000, ex=600:1000, exact=F)
-    if(is.character(process_file_name)){
-      write.table(paste(Sys.time(), "- EEM's were clipped to just emission wavelengths under 600 nm", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+    .write_processing_tracking("EEM's were clipped to just emission wavelengths under 600 nm")
 
     X_ife <- eem_inner_filter_effect(X_ife, absorbance=abs)
-    if(is.character(process_file_name)){
-      # TODO Could Make this write.table call a function since it's repeated many times
-      write.table(paste(Sys.time(), "- EEM's were corrected for inner filter effects", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+      .write_processing_tracking("EEM's were corrected for inner filter effects")
     if(length(empty_eems(X_ife, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after correcting for inner filter effects, use 'empty_eems' function to find out which ones")
     }
     }
 
-  #perform raman normalization
+  # Perform raman normalization
   X_norm <- X_ife
   if(raman_norm == T){
     meta$raman_norm <- meta$integration_time_s * meta$RSU_area_1s
@@ -153,10 +154,10 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
     if(length(empty_eems(X_norm, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after normalizing for raman area, use 'empty_eems' function to find out which ones")
     }
-    if(is.character(process_file_name)){
-      write.table(paste(Sys.time(), "- EEM's were normalized by raman area", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}}
+    .write_processing_tracking("EEM's were normalized by Raman area")
+  }
 
-  #account for dilutions
+  # Account for dilutions ----
   X_dil_cor <- X_norm
   Sabs_dil_cor <- abs
   if(dilute == T){
@@ -166,13 +167,13 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
     })
     class(X_dil_cor) <- "eemlist"
     attr(abs, "is_dil_corrected") <- TRUE
-    if(is.character(process_file_name)){
-      write.table(paste(Sys.time(), "- EEM's were corrected for dilutions", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)
-      write.table(paste(Sys.time(), "- Absorbance was corrected for dilutions", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+    .write_processing_tracking("EEM's were corrected for dilutions")
+    .write_processing_tracking("Absorbance was corrected for dilutions")
 
     if(sum(meta$dilution != 1) > 0){
       dil_data <- meta %>% select(dilution) #invert to match function
-      if(mean(unlist(dil_data), na.rm=T) < 1){dil_data <- 1 / dil_data
+      if(mean(unlist(dil_data), na.rm=T) < 1){
+        dil_data <- 1 / dil_data
       warning("Inverted dilutions to be dilution factor")}
 
       X_dil_cor <- X_dil_cor %>% staRdom::eem_dilution(dil_data)
@@ -181,19 +182,21 @@ eem_proccess <- function(prjpath, eemlist, blanklist, abs,
       for(x in 1:nrow(meta)){
         dil_fact <- meta$dilution[x]
         if(dil_fact < 1){dil_fact <- 1 / dil_fact }
-        Sabs_dil_cor[,meta$abs_col[x]] <- abs[,meta$abs_col[x]] * dil_fact}
+        Sabs_dil_cor[,meta$abs_col[x]] <- abs[,meta$abs_col[x]] * dil_fact
+        }
     }
   }
   if(length(empty_eems(X_dil_cor, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after correcting for dilutions, use 'empty_eems' function to find out which ones")
   }
 
-  #clip EEM's  #clips un-normalized eem
+  # Clip EEM's
+  # Clips un-normalized eem ----
   X_clip <- X_dil_cor
   X_clip<- eem_cut2(X_clip, ex=ex_clip, em=em_clip, exact=F)
-  if(is.character(process_file_name)){
-    write.table(paste(Sys.time(), "- DOC Normalized EEM's were clipped to Excitation:",ex_clip[1]," to ", ex_clip[2],
-                      " nm and Emission:",em_clip[1]," to ", em_clip[2], " nm", sep=""), process_file_name, append=T, quote=F, row.names = F, col.names = F)}
+  .write_processing_tracking(paste0("DOC Normalized EEM's were clipped to Excitation:",
+                             ex_clip[1], " to ", ex_clip[2],  " nm and Emission:",
+                             em_clip[1]," to ", em_clip[2], " nm"))
   if(length(empty_eems(X_clip, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after clipping, use 'empty_eems' function to find out which ones")
   }
@@ -380,3 +383,4 @@ eem_cut2 <- function (eem, ex, em, exact = FALSE, fill_with_na = FALSE) {
   }
   return(eem)
 }
+
