@@ -187,9 +187,22 @@ empty_eems <- function(eem, verbose=T){
   return(outcome)
 }
 
+#' Returns fewsdom package version loaded
+#'
+#' @return text string with fewsdom package version
+.fewsdom_ver <- function() {
+  paste0("fewsdom_", packageVersion("fewsdom"))
+  }
+
+#' Generate spectral index documenation for
+#'
+#' @return data.frame with information documenting column lables of spectral indices spreadsheet
+#'
 .document_indices <- function() {
 
-  documentation <- data.frame(c("Peaks extracted using fewsdom package in R.",
+  fewsdom_version <- .fewsdom_ver()
+
+  documentation <- data.frame(c(paste0("Peaks extracted using ", fewsdom_version, " package in R."),
                                 "For peak definitions see 'eem_coble_peaks2' and 'abs_parm' functions in the fewsdom package.",
                                 "The package can be downloaded from https://github.com/FEWSLab/fewsdom",
                                 "",
@@ -255,4 +268,35 @@ empty_eems <- function(eem, verbose=T){
                                 "SR: Spectral slope S275_295 divided by spectral slope S350_400, negatively correlated to DOM molecular weight",
                                 "and generally increases on irradiation."))
   return(documentation)
+}
+
+.write_processing_tracking <- function(text,
+                                       tracking_filename = "processing_tracking.txt",
+                                       overwrite = FALSE
+                                       ) {
+
+  # Check that we want to do this otherwise exit the function
+  stopifnot(is.character(text))
+
+  #create text file to track processing changes
+  tracking_path <- file.path(prjpath,
+                             "5_Processed",
+                             tracking_filename)
+  if (overwrite) {
+    # If the file should be overwritten (new processing run), create a new file
+    file.create(tracking_path,
+                overwrite = TRUE)
+    write(paste0("PROCESSING STEPS ON ", round(Sys.time(), "secs"), " using ", .fewsdom_ver()),
+          file = tracking_path)
+  } else {
+    # This case we just append a new line to the end of the file with the text
+    line_write <- paste(round(Sys.time(),
+                              "secs"),
+                        text,
+                        sep = " - ")
+    write(line_write,
+          file = tracking_path,
+          append = TRUE)
   }
+
+}

@@ -222,11 +222,15 @@ find_cut_width <- function(eem, type="rayleigh", order=1){
 #' @param rayleigh_mask optional if auto width method is used, a vector of length 4 specifying the width of the rayleigh line to cut, numbers 1:2 are width above and below first order line, numbers 3:4 are width above and below second order line
 #' @param rayleigh_width either "auto" or "manual", if auto is chosen cutting widths will be found using the 'find_cut_width' function
 #' @param rayleigh_interp a vector of length two, either T or F, specifying whether the first and second order lines should be interpolated, the first position refers to the first order line, the way the code is written you cannot interpolate the first order line and not the second
-#' @param process_file a file path to a .txt file, used to track processing changes to EEMs
 #' @param verbose a logical, if TRUE will print out widths used to mask via the auto width method
 #' @export
 
-rayleigh <- function(eem, rayleigh_mask=c(20,10,10,10), rayleigh_width="auto", rayleigh_interp=c(F,F), process_file=NULL, verbose=F, ...){
+rayleigh <- function(eem,
+                     rayleigh_mask=c(20,10,10,10),
+                     rayleigh_width="auto",
+                     rayleigh_interp=c(F,F),
+                     verbose=F,
+                     ...){
   #function checks
   stopifnot(.is_eemlist(eem) | is.numeric(rayleigh_mask)|length(rayleigh_mask)==4|
               rayleigh_width %in% c("auto", "manual")| length(rayleigh_interp)==2 |
@@ -242,27 +246,27 @@ rayleigh <- function(eem, rayleigh_mask=c(20,10,10,10), rayleigh_width="auto", r
   }
 
   #second order rayleigh, done first in case there is interpolation
-    eem_rm <- eem_remove_scattering2(eem=eem, type="rayleigh", order=2, up_width = rayleigh_mask[3], down_width = rayleigh_mask[4])
-    if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- Second order Rayleigh scattering was removed with a ", rayleigh_mask[3]," nm width above and ",
-                        rayleigh_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
-
-  if(rayleigh_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- Second order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
+  eem_rm <- eem_remove_scattering2(eem=eem, type="rayleigh", order=2, up_width = rayleigh_mask[3], down_width = rayleigh_mask[4])
+  .write_processing_tracking(
+    paste0("Second order Rayleigh scattering was removed with a ",
+           rayleigh_mask[3]," nm width above and ",rayleigh_mask[4], " nm width below")
+  )
+  if(rayleigh_interp[2] == T){
+    eem_rm <- eem_interp(data=eem_rm, ...)
+    .write_processing_tracking("Second order Rayleigh scattering filled via interpolation")
+  }
 
   #first order rayleigh
-    eem_rm <- eem_remove_scattering2(eem=eem_rm, type="rayleigh", order=1, up_width = rayleigh_mask[1], down_width = rayleigh_mask[2])
-    if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- First order Rayleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
-                        rayleigh_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
-    }
+  eem_rm <- eem_remove_scattering2(eem=eem_rm, type="rayleigh", order=1, up_width = rayleigh_mask[1], down_width = rayleigh_mask[2])
+  .write_processing_tracking(
+    paste0("First order Rayleigh scattering was removed with a ", rayleigh_mask[1]," nm width above and ",
+                        rayleigh_mask[2], " nm width below")
+  )
 
-  if(rayleigh_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- First order Rayleigh scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)
-  }}
-
+  if(rayleigh_interp[1] == T){
+    eem_rm <- eem_interp(data=eem_rm, ...)
+    .write_processing_tracking("First order Rayleigh scattering filled via interpolation")
+  }
   return(eem_rm)
 }
 
@@ -277,12 +281,15 @@ rayleigh <- function(eem, rayleigh_mask=c(20,10,10,10), rayleigh_width="auto", r
 #' @param raman_mask a vector of length 4 specifying the width of the raman line to cut, numbers 1:2 are width above and below first order line, numbers 3:4 are width above and below second order line, since you cannot use the auto method for second order raman this must be specified
 #' @param raman_width either "auto" or "manual". If auto is chosen cutting widths will be found using the 'find_cut_width' function
 #' @param raman_interp a vector of length two, either T or F, specifying whether the first and second order lines should be interpolated, the first position refers to the first order line, the way the code is written you cannot interpolate the first order line and not the second
-#' @param process_file a file path to a .txt file, used to track processing changes to EEMs
 #' @param verbose a logical, if TRUE will print out widths used to mask via the auto width method
 #' @export
 
-raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_interp=c(T,T),
-                  process_file=NULL, verbose=F, ...){
+raman <- function(eem,
+                  raman_mask=c(8,8,1.5,1.5),
+                  raman_width="auto",
+                  raman_interp=c(T,T),
+                  verbose=F,
+                  ...){
   #function checks
   stopifnot(.is_eemlist(eem) | is.numeric(raman_mask)|length(raman_mask)==4|
               raman_width %in% c("auto", "manual")| length(raman_interp)==2 |
@@ -300,22 +307,24 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
   #second order raman, done first for interpolation
   if(sum(raman_mask[3:4]) > 0){
     eem_rm <- eem_remove_scattering2(eem=eem, type="raman", order=2, up_width = raman_mask[3], down_width = raman_mask[4])
-    if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- Second order Raman scattering was removed with a ", raman_mask[3]," nm width above and ",
-                        raman_mask[4], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
-  if(raman_interp[2] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- Second order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}}
-
+    .write_processing_tracking(
+      paste0("Second order Raman scattering was removed with a ",
+      raman_mask[3]," nm width above and ", raman_mask[4], " nm width below")
+    )
+  }
+  if(raman_interp[2] == T){
+    eem_rm <- eem_interp(data = eem_rm, ...)
+    .write_processing_tracking("Second order Raman scattering filled via interpolation")
+  }
   #first order raman
-    eem_rm <- eem_remove_scattering2(eem=eem_rm, type="raman", order=1, up_width = raman_mask[1], down_width = raman_mask[2])
-    if(is.character(process_file)){
-      write.table(paste(Sys.time(), "- First order Raman scattering was removed with a ", raman_mask[1]," nm width above and ",
-                        raman_mask[2], " nm width below", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
-
-  if(raman_interp[1] == T){eem_rm <- eem_interp(data=eem_rm, ...)
-  if(is.character(process_file)){
-    write.table(paste(Sys.time(), "- First order Raman scattering filled via interpolation", sep=""), process_file, append=T, quote=F, row.names = F, col.names = F)}
+  eem_rm <- eem_remove_scattering2(eem=eem_rm, type="raman", order=1, up_width = raman_mask[1], down_width = raman_mask[2])
+  .write_processing_tracking(
+    paste0("First order Raman scattering was removed with a ",
+           raman_mask[1]," nm width above and ", raman_mask[2], " nm width below")
+  )
+  if(raman_interp[1] == T){
+    eem_rm <- eem_interp(data=eem_rm, ...)
+    .write_processing_tracking("First order Raman scattering filled via interpolation")
   }
 
   eem_rm
@@ -343,8 +352,12 @@ raman <- function(eem, raman_mask=c(8,8,1.5,1.5), raman_width="auto", raman_inte
 #' @noRd
 #'
 
-eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
-                        type = TRUE, verbose = FALSE, nonneg = TRUE, extend = FALSE,
+eem_interp <- function (data,
+                        cores = parallel::detectCores(logical = FALSE) - 1, # I like to leave one core open just in case
+                        type = TRUE,
+                        verbose = FALSE,
+                        nonneg = TRUE,
+                        extend = FALSE,
                         ...)
 {
   cl <- parallel::makeCluster(spec = min(cores, length(data)), type = "PSOCK")
@@ -362,9 +375,15 @@ eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
                                              "tidyr")) %dopar% {
     eem <- data[[i]]
     if (type == 4) {
-      eem$x <- cbind(zoo::na.approx(eem$x, ...), t(zoo::na.approx(t(eem$x),
-                                                                  ...))) %>% array(c(nrow(eem$x), ncol(eem$x),
-                                                                                     2)) %>% apply(1:2, mean, na.rm = TRUE)
+      eem$x <-
+        cbind(zoo::na.approx(eem$x,
+#                                    ...
+                                    ),
+                     t(zoo::na.approx(t(eem$x),
+                                      ...
+                                      ))) %>%
+        array(c(nrow(eem$x), ncol(eem$x),2)) %>%
+        apply(1:2, mean, na.rm = TRUE)
     }
     if (type == 1 | type == TRUE) {
       x <- eem$x %>% data.frame() %>% `colnames<-`(eem$ex) %>%
@@ -373,16 +392,22 @@ eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
       x2 <- x %>% filter(!is.na(z))
       x3 <- MBA::mba.points(xyz = x2 %>% select(em, ex,
                                                 z), xy.est = expand.grid(em = eem$em, ex = eem$ex),
-                            verbose = verbose, extend = extend, ...)
+                            verbose = verbose, extend = extend,
+ #                           ...
+                            )
       eem$x[is.na(eem$x)] <- x3$xyz.est[, 3] %>% matrix(nrow = nrow(eem$x),
                                                         ncol = ncol(eem$x)) %>% .[is.na(eem$x)]
     }
     if (type == 2) {
       x1 <- try(eem$x %>% apply(1, function(row) pracma::pchip(xi = eem$ex[!is.na(row)],
-                                                               yi = row %>% na.omit(), x = eem$ex), ...) %>%
+                                                               yi = row %>% na.omit(), x = eem$ex),
+#                              ...
+                                ) %>%
                   t(), silent = TRUE)
       x2 <- try(eem$x %>% apply(2, function(col) pracma::pchip(xi = eem$em[!is.na(col)],
-                                                               yi = col %>% na.omit(), x = eem$em), ...), silent = TRUE)
+                                                               yi = col %>% na.omit(), x = eem$em),
+#                                ...
+                                ), silent = TRUE)
       if (inherits(x1, "try-error") & inherits(x2, "try-error"))
         warning(eem$sample, " could not be interpolated!")
       if (inherits(x1, "try-error"))
@@ -394,7 +419,9 @@ eem_interp <- function (data, cores = parallel::detectCores(logical = FALSE),
     }
     if (type == 3) {
       eem$x <- eem$x %>% apply(2, function(col) pracma::pchip(xi = eem$em[!is.na(col)],
-                                                              yi = col %>% na.omit(), x = eem$em, ...))
+                                                              yi = col %>% na.omit(), x = eem$em,
+ #                                                             ...
+                                                              ))
     }
     if (type == 0) {
       eem$x[is.na(eem$x)] <- 0
