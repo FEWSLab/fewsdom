@@ -62,11 +62,15 @@ abs_parm <- function(abs_data, waves=NULL, meta, keep_all=F, cuvle = 1){
   data$wavelength <- 249:791
 
   #build data table to put in data
-  abs_out <- as.data.frame(matrix(nrow=(ncol(abs_data)-1), ncol=(14 + length(waves))))
-  colnam <- c("sample", paste("SUVA", c(254,280, 350, 370), sep=""), paste("SVA", c(412,440,480,510,532,555), sep=""), "S275_295", "S350_400", "SR")
-  if(length(waves) > 0){
-    colnam <- c(colnam, paste("a", waves, sep=""))
-  }
+  if(!is.null(waves)) wave_colnam <- paste0("a", waves)
+  colnam <- c("sample",
+              paste("SUVA", c(254,280, 350, 370), sep=""),
+              paste("SVA", c(412,440,480,510,532,555), sep=""),
+              "S275_295", "S350_400", "SR",
+              wave_colnam)
+
+  abs_out <- as.data.frame(matrix(nrow=(ncol(abs_data)-1),
+                                  ncol=(length(colnam))))
   colnames(abs_out) <- colnam
   abs_out$sample <- colnames(abs_data)[2:ncol(abs_data)]
 
