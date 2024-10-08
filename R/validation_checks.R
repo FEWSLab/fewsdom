@@ -184,6 +184,17 @@ plot_absorbance_error <- function(model_data,
   plot(abs_plot)
 }
 
+# Function to plot the instrument blank before proceeding with the data processing
+# to check that the instrument blank is OK to be subtracted. Otherwise we can abort
+# processing and use a sample blank instead.
+# Plot without any masking or interpolation (just raw data)
+plot_instrument_blank <- function(blklist) {
+
+
+
+
+}
+
 
 
 

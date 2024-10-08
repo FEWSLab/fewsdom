@@ -16,6 +16,8 @@
 #' @param manualscale a logical indicating if you want to specify the minimum and maximum of the intensity scale manually, good for comparisons across samples
 #' @param manualmax maximum value for intensity scale
 #' @param manualmin minimum value used for intensity scale
+#' @param scalefunc function of how to scale the colors. log or linear
+#' @param plot_type string specifying if the user wants a contour or raster plot. default "contour"
 #' @param nbins the number of bins (and colors) used in the contour plot, maximum of 24
 #' @param label_peaks a logical indicating if you want the main coble peaks annotated on the plot
 #' @param prec an integer for the number of significant figures used for binning the intensity
@@ -25,19 +27,23 @@
 #' @export
 
 ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
-                      nbins = 8, label_peaks=F, prec=2, palette="parula",
-                      z_unit="RU"){
+                   scalefunc = "linear", plot_type = "contour",
+                   nbins = 8, label_peaks=F, prec=2, palette="parula",
+                   z_unit="RU"){
   stopifnot(nbins <= 24 |.is_eem(eem) | .is_eemlist(eem) |
               is.logical(c(manualscale, label_peaks))|
               is.numeric(c(nbins, prec, nbins))| z_unit %in% c("RU", "DOC")|
-              palette %in% c("parula", "ocean.haline","cubicl", "kovesi", "katie_pal"))
+              palette %in% c("parula", "ocean.haline","cubicl", "kovesi", "katie_pal") |
+              scalefunc %in% c("log", "linear") |
+              plot_type %in% c("contour", "raster"))
 
   if (.is_eemlist(eem)) {
     res <- lapply(eem, ggeem2, manualscale=manualscale,
                   manualmax=manualmax, manualmin=manualmin,
                   nbins =nbins, label_peaks=label_peaks,
                   prec=prec, palette=palette,
-                  z_unit=z_unit)
+                  z_unit=z_unit,
+                  scalefunc = scalefunc)
     return(res)
   }
   .ceiling_dec <- function(x, level=-.place_val(x)) round(x + 5.0001*10^(-level-1), level) #ceiling function with decimal
@@ -77,16 +83,16 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
 
   #get color palette
   if(palette == "parula"){
-    colors <- pals::parula(n=nbins)
+    color_pal <- pals::parula(n=nbins)
   }else if(palette == "ocean.haline"){
-    colors <- pals::ocean.haline(n=nbins)
+    color_pal <- pals::ocean.haline(n=nbins)
   }else if(palette == "cubicl"){
-    colors <- pals::cubicl(n=nbins)
+    color_pal <- pals::cubicl(n=nbins)
   }else if(palette == "kovesi.rainbow"){
-    colors <- pals::kovesi.rainbow(n=nbins)
+    color_pal <- pals::kovesi.rainbow(n=nbins)
   }else if(palette == "katie_pal"){
     katie <- colorRampPalette(c("#d9ead3","#274e13"))
-    colors <- katie(nbins)
+    color_pal <- katie(nbins)
   }else{
     stop("Please choose 'parula', 'ocean.haline', 'cubehelix', or 'kovesi.rainbow'")
   }
@@ -108,6 +114,15 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
   df <- df[,c(2,1,3)]
   colnames(df) <- c("x", "y", "z")
   df$x <- as.numeric(as.character(df$x))
+
+  # Set scale the data as log or linear
+  df$z <- switch(scalefunc,
+                 linear = df$z,
+                 log = log(ifelse(df$z <= 0,
+                                  0.01,
+                                  df$z)
+                           )
+                 )
 
   #get things for plotting
   if(manualscale == F){
@@ -147,25 +162,89 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
   y_min <-plyr::round_any(y_min, y_range, f = floor)
   y_max <-plyr::round_any(y_max, y_range, f = floor)
 
-  #create plot
-  plot <- ggplot2::ggplot(df, aes(x,y, z=z)) +
-    ggplot2::geom_contour_filled(aes(z = z), breaks=breaks)+
-    ggplot2::coord_cartesian(expand = FALSE) + geom_contour(breaks=breaks, color=colors[1], size=0.1) +
+
+  plot_type_mod <- function(plot_type = "contour",
+                   colors,
+                   labels,
+                   breaks,
+                   ...) {
+
+      if (plot_type == "contour") {
+        return(
+          list(
+            ggplot2::geom_contour_filled(aes(z = z), breaks=breaks),
+           # ggplot2::geom_contour(breaks=breaks, color=colors[1], size=0.1),
+            ggplot2::scale_fill_manual(values = colors,
+                                       labels = labels,
+                                       ...))
+        )
+        }
+
+      if (plot_type == "raster") {
+        return(
+          list(ggplot2::geom_raster(aes(fill = z),
+                             interpolate = TRUE,
+                             ...),
+          ggplot2::scale_fill_gradientn(colors = colors,
+                                        labels = labels,
+                                        breaks = breaks,
+                                        ...))
+        )
+        }
+  }
+
+  plot_type_list <- plot_type_mod(plot_type,
+                                  colors = color_pal,
+                                  labels = labs,
+                                  breaks = breaks)
+
+  browser()
+
+  plot <- ggplot2::ggplot(df, aes(x,y)) +
+    ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(x="Excitation (nm)", y="Emission (nm)")+
+    plot_type_list +
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text = element_text(colour = 1, size = 10),
-          axis.title = element_text(colour = 1, size = 12),
-          legend.background = element_blank(),
-          legend.key = element_blank(),
-          legend.position = "right")+
-    ggplot2::scale_fill_manual(values = colors,  labels = labs) +
+                   axis.title = element_text(colour = 1, size = 12),
+                   legend.background = element_blank(),
+                   legend.key = element_blank(),
+                   legend.position = "right") +
     ggplot2::guides(fill = guide_legend(title.position = "right",direction = "vertical",
-                               title.theme = element_text(angle = 90, size = 12, colour = "black"),
-                               barheight = .5, barwidth = .95,
-                               title.hjust = 0.5, raster = FALSE,
-                               title = plot_z, reverse=TRUE)) +
+                                      title.theme = element_text(angle = 90, size = 12, colour = "black"),
+                                      barheight = .5, barwidth = .95,
+                                      title.hjust = 0.5, raster = FALSE,
+                                      title = plot_z, reverse=TRUE)) +
     ggplot2::scale_x_continuous(breaks = round(seq(x_min, x_max, by = x_range),1)) +
     ggplot2::scale_y_continuous(breaks = round(seq(y_min, y_max, by = y_range),1))
+
+
+  # # Old base plot function
+  # plot <- ggplot2::ggplot(df, aes(x,y)) +
+  #   ggplot2::coord_cartesian(expand = FALSE) +
+  #   ggplot2::labs(x="Excitation (nm)", y="Emission (nm)")+
+  #   ggplot2::theme_bw() +
+  #   ggplot2::theme(axis.text = element_text(colour = 1, size = 10),
+  #         axis.title = element_text(colour = 1, size = 12),
+  #         legend.background = element_blank(),
+  #         legend.key = element_blank(),
+  #         legend.position = "right") +
+  #  if (plot_type == "contour") {
+  #  ggplot2::geom_contour_filled(aes(z = z), breaks=breaks)+
+  #  ggplot2::scale_fill_manual(values = colors, labels = labs) +
+  #  }
+  #   if (plot_type == "raster") {
+  #   ggplot2::geom_raster(aes(fill = z),
+  #                        interpolate = TRUE) +
+  #   ggplot2::scale_fill_gradientn(colors = colors,  labels = labs, breaks = breaks) +
+  #   }
+  #  ggplot2::guides(fill = guide_legend(title.position = "right",direction = "vertical",
+  #                             title.theme = element_text(angle = 90, size = 12, colour = "black"),
+  #                             barheight = .5, barwidth = .95,
+  #                             title.hjust = 0.5, raster = FALSE,
+  #                             title = plot_z, reverse=TRUE)) +
+  #   ggplot2::scale_x_continuous(breaks = round(seq(x_min, x_max, by = x_range),1)) +
+  #   ggplot2::scale_y_continuous(breaks = round(seq(y_min, y_max, by = y_range),1))
 
   if(label_peaks == T){
     plot_pk <- data.frame(peak=c("B", "T", "A", "M", "C", "D", "E","N"),
