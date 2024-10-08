@@ -360,6 +360,10 @@ eem_interp <- function (data,
                         extend = FALSE,
                         ...)
 {
+  # TODO: Figure out what this function does - maybe we can improve the interpolation
+  # or flag point spikes here to warn us if there are any issues with point spikes.
+
+  # Set up the cluster
   cl <- parallel::makeCluster(spec = min(cores, length(data)), type = "PSOCK")
   `%dopar%` <- foreach::`%dopar%`
   doParallel::registerDoParallel(cl)
@@ -367,6 +371,7 @@ eem_interp <- function (data,
     cat("interpolating missing data in", length(data), "EEMs",
         fill = TRUE)
   }
+  # Create the eemlist in parallel
   eem_list <- foreach::foreach(i = 1:length(data),
                                .packages = c("magrittr",
                                              "dplyr",
@@ -385,7 +390,7 @@ eem_interp <- function (data,
         array(c(nrow(eem$x), ncol(eem$x),2)) %>%
         apply(1:2, mean, na.rm = TRUE)
     }
-    if (type == 1 | type == TRUE) {
+    if (type) {
       x <- eem$x %>% data.frame() %>% `colnames<-`(eem$ex) %>%
         `rownames<-`(eem$em) %>% mutate(em = eem$em) %>%
         tidyr::gather("ex", "z", -em) %>% mutate_all(as.numeric)
@@ -432,5 +437,5 @@ eem_interp <- function (data,
   }
   parallel::stopCluster(cl)
   class(eem_list) <- "eemlist"
-  eem_list
+  return(eem_list)
 }
