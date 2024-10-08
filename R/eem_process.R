@@ -88,7 +88,7 @@ eem_proccess <- function(prjpath,
     eem <- eemlist[[n]]
     if(replace_blank == T){
       blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
-      warning("Instrument blank was substituted for the first sample blank.")
+      warning("Instrument blank was substituted by the first sample blank.")
     } else{
       blank <- blanklist[[n]]
     }
