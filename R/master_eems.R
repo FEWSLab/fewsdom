@@ -86,6 +86,10 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   X_blk <- test[[3]]
   Sabs <- test[[4]]
 
+  ## Check that the instrument blank is ok before continuing with processing steps
+  browser()
+  ggeem2(X_blk[[1]], nbins = 16, scalefunc = "log")
+
   ## Process the EEM's
   cat("Processing EEMs and absorbance data \n")
   data_process <- eem_proccess(prjpath=prjpath, eemlist=X, blanklist=X_blk, abs=Sabs,
