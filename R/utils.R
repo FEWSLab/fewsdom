@@ -274,7 +274,6 @@ empty_eems <- function(eem, verbose=T){
                                        tracking_filename = "processing_tracking.txt",
                                        overwrite = FALSE
                                        ) {
-
   # Check that we want to do this otherwise exit the function
   stopifnot(is.character(text))
 
@@ -284,8 +283,7 @@ empty_eems <- function(eem, verbose=T){
                              tracking_filename)
   if (overwrite) {
     # If the file should be overwritten (new processing run), create a new file
-    file.create(tracking_path,
-                overwrite = TRUE)
+    file.create(tracking_path)
     write(paste0("PROCESSING STEPS ON ", round(Sys.time(), "secs"), " using ", .fewsdom_ver()),
           file = tracking_path)
   } else {
@@ -300,3 +298,27 @@ empty_eems <- function(eem, verbose=T){
   }
 
 }
+
+
+# Answer validation questions yes or no
+.yesorno <- function(question,
+                     y_response,
+                     n_response) {
+  stopifnot(is.character(question) |
+              is.character(y_response) |
+              is.character(n_response))
+  cont <- readline(paste0(question, " [y/n]"))
+  if(grepl("^y$", cont, ignore.case = TRUE)) {
+    cat(y_response, "\n")
+    return(TRUE)
+  } else if(grepl("^n$", cont, ignore.case = TRUE)){
+    cat(n_response, "\n")
+    return(FALSE)
+  } else {
+    cat("Improper response, please respond y or n", "\n")
+    .yesorno(question,
+             y_response,
+             n_response)
+  }
+}
+

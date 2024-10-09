@@ -95,44 +95,32 @@ validate_tea_absorbance <- function(abs_df,
                 sample,
                 " was outside the absorbance testing threshold.")
 
-
         # Plot the Tea absorbance vs the validated model
         plot_absorbance_error(model_abs,
                               sample_abs,
                               sample,
                               condition = "WARNING")
 
-        # Prompt user for input to accept or decline the warning
-        cont <- readline("Do you wish to accept the warning and continue? [y/n]")
-        # If yes, throw warning and continue
-        if(grepl("y", cont, ignore.case = TRUE)) {
-          if (is.character(process_file_name)) {
-            write.table(paste0(Sys.time(),
-                               " - User warned sample ",
-                               sample,
-                               " FAILED absorbance validation checks, but ok'd to continue"),
-                        process_file_name,
-                        append =TRUE,
-                        quote = FALSE,
-                        row.names = FALSE,
-                        col.names = FALSE)
-            }
-          } else {
-                if(is.character(process_file_name)) {
-                  write.table(paste0(Sys.time(),
-                                     "- Processing Aborted by user. Tea standard failed validation"),
-                                      process_file_name,
-                                      append =TRUE,
-                                      quote = FALSE,
-                                      row.names = FALSE,
-                                      col.names = FALSE)
-                }
+        # User response using .yesorno
+        response <- .yesorno("Do you wish to accept the warning and continue?",
+                             paste0("User warned sample",
+                                    sample,
+                                    " FAILED absorbance validation checks, but ok'd to continue"),
+                             "Processing Aborted by user. Tea standard failed validation.")
+        # Writing the response to processing_tracking.txt
+        if(response) {
+          .write_processing_tracking(paste0("User warned sample",
+                                            sample,
+                                            " FAILED absorbance validation checks, but ok'd to continue"))
+        } else {
+          .write_processing_tracking("Processing Aborted by user. Tea standard failed validation.")
 
           stop("Processing Aborted by user. Tea standard failed validation.")
-          }
+        }
       } else {
         passfail <- "PASS"
       }
+
 
       # Save the results of the test
       new_result <- data.frame("sample" = sample,
@@ -188,10 +176,31 @@ plot_absorbance_error <- function(model_data,
 # to check that the instrument blank is OK to be subtracted. Otherwise we can abort
 # processing and use a sample blank instead.
 # Plot without any masking or interpolation (just raw data)
-plot_instrument_blank <- function(blklist) {
+validate_instrument_blank <- function(blklist,
+                                      ...) {
 
+  cat("Plotting blanks for user validation \n")
 
+  # TODO: Apply some automated blank validation here like the tea absorbance
 
+  # First plot the blank EEMs
+  blank_plots <- ggeem2(blklist,
+                        nbins = 16,
+                        scalefunc = "log",
+                        plot_title = TRUE,
+                        ...)
+  lapply(blank_plots, plot)
+
+  # TODO: Give user choice which blank to use if they want to replace instrument blank
+
+  # Then ask the user if they want to still use the instrument blank or do they
+  # want to use the first sample blank?
+  # Prompt user for input to accept or decline the warning
+  response <- .yesorno("Do you wish to use the instrument blank?",
+                       "Instrument blank accepted and used for subtraction",
+                       "Instrument blank not accepted - using first sample blank instead")
+
+  return(!response) # has to be opposite due to replace_blank flag in eem_process
 
 }
 

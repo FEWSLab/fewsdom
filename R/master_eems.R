@@ -87,13 +87,21 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   Sabs <- test[[4]]
 
   ## Check that the instrument blank is ok before continuing with processing steps
-  browser()
-  ggeem2(X_blk[[1]], nbins = 16, scalefunc = "log")
+  Iblank <- X_blk[[1]]
+  Sblank <- X[sapply(X,
+                   \(x) grepl("^blk",
+                              x$sample,
+                              ignore.case = TRUE))]
+  class(Sblank) <- "eemlist"
+  blanks_eemlist <- eemR::eem_bind(Iblank, Sblank)
+  blank_validation <- validate_instrument_blank(blanks_eemlist,
+                                                ...)
 
   ## Process the EEM's
   cat("Processing EEMs and absorbance data \n")
   data_process <- eem_proccess(prjpath=prjpath, eemlist=X, blanklist=X_blk, abs=Sabs,
-                               process_file=process_file, meta=meta,...)
+                               process_file=process_file, meta=meta,
+                               replace_blank = blank_validation)
   X_clean <- data_process[[1]]  #returns non doc normalized data
   abs_clean <- data_process[[2]]
 
@@ -106,11 +114,11 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   cat("Reporting EEMs and absorbance data \n")
 
   #create plots
-  plot_eems(prjpath = prjpath, meta=meta, eem=X_clean, doc_norm=F)
+  plot_eems(prjpath = prjpath, meta=meta, eem=X_clean, doc_norm=F, ...)
 
   if(sum(is.na(meta$DOC_mg_L)) < nrow(meta)){
     plot_eems(prjpath = prjpath, meta=meta, eem=X_clean, doc_norm=T,
-              save_names="_DOC")
+              save_names="_DOC", ...)
   }
 
 

@@ -18,6 +18,7 @@
 #' @param manualmin minimum value used for intensity scale
 #' @param scalefunc function of how to scale the colors. log or linear
 #' @param plot_type string specifying if the user wants a contour or raster plot. default "contour"
+#' @param plot_title logical - set to true if you want the plot title on the plot (mostly for interactive use)
 #' @param nbins the number of bins (and colors) used in the contour plot, maximum of 24
 #' @param label_peaks a logical indicating if you want the main coble peaks annotated on the plot
 #' @param prec an integer for the number of significant figures used for binning the intensity
@@ -29,7 +30,8 @@
 ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
                    scalefunc = "linear", plot_type = "contour",
                    nbins = 8, label_peaks=F, prec=2, palette="parula",
-                   z_unit="RU"){
+                   z_unit="RU",
+                   plot_title = FALSE){
   stopifnot(nbins <= 24 |.is_eem(eem) | .is_eemlist(eem) |
               is.logical(c(manualscale, label_peaks))|
               is.numeric(c(nbins, prec, nbins))| z_unit %in% c("RU", "DOC")|
@@ -43,7 +45,9 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
                   nbins =nbins, label_peaks=label_peaks,
                   prec=prec, palette=palette,
                   z_unit=z_unit,
-                  scalefunc = scalefunc)
+                  scalefunc = scalefunc,
+                  plot_title = plot_title,
+                  plot_type = plot_type)
     return(res)
   }
   .ceiling_dec <- function(x, level=-.place_val(x)) round(x + 5.0001*10^(-level-1), level) #ceiling function with decimal
@@ -198,11 +202,37 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
                                   labels = labs,
                                   breaks = breaks)
 
-  browser()
+  plot_labels <- function(plot_title) {
+    plt_title <- NULL
+    if(plot_title) plt_title <- eem$sample
+    list(
+      ggplot2::labs(x="Excitation (nm)",
+                    y="Emission (nm)",
+                    title = plt_title)
+    )
+  }
+  peak_labels <- function(label_peaks) {
+    # Peak labels
+    plot_pk <- data.frame(peak=c("B", "T", "A", "M", "C", "D", "E","N"),
+                          x=c(275, 275, 265, 315, 340, 390, 455,280),
+                          y=c(310,335, 430,400, 450,509,521,370))
+
+    plot_pk <- subset(plot_pk, plot_pk$x > x_min & plot_pk$x < x_max & plot_pk$y > y_min & plot_pk$y < y_max)
+    if(label_peaks){
+      list(ggplot2::annotate("text", x = plot_pk$x, y = plot_pk$y, label = plot_pk$peak, size=3.2),
+           ggplot2::annotate("rect", xmin=254, xmax = 260, ymin = 380, ymax=480, color="black", fill=NA),
+           ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 300, ymax=320, color="black", fill=NA),
+           ggplot2::annotate("rect", xmin=330, xmax = 350, ymin = 420, ymax=480, color="black", fill=NA),
+           ggplot2::annotate("rect", xmin=310, xmax = 320, ymin = 380, ymax=420, color="black", fill=NA),
+           ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 320, ymax=350, color="black", fill=NA))
+    } else {
+      list()
+    }
+  }
 
   plot <- ggplot2::ggplot(df, aes(x,y)) +
     ggplot2::coord_cartesian(expand = FALSE) +
-    ggplot2::labs(x="Excitation (nm)", y="Emission (nm)")+
+    plot_labels(plot_title) +
     plot_type_list +
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text = element_text(colour = 1, size = 10),
@@ -216,7 +246,8 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
                                       title.hjust = 0.5, raster = FALSE,
                                       title = plot_z, reverse=TRUE)) +
     ggplot2::scale_x_continuous(breaks = round(seq(x_min, x_max, by = x_range),1)) +
-    ggplot2::scale_y_continuous(breaks = round(seq(y_min, y_max, by = y_range),1))
+    ggplot2::scale_y_continuous(breaks = round(seq(y_min, y_max, by = y_range),1)) +
+    peak_labels(label_peaks)
 
 
   # # Old base plot function
@@ -246,21 +277,21 @@ ggeem2 <- function(eem, manualscale=F, manualmax=1.5, manualmin=0,
   #   ggplot2::scale_x_continuous(breaks = round(seq(x_min, x_max, by = x_range),1)) +
   #   ggplot2::scale_y_continuous(breaks = round(seq(y_min, y_max, by = y_range),1))
 
-  if(label_peaks == T){
-    plot_pk <- data.frame(peak=c("B", "T", "A", "M", "C", "D", "E","N"),
-                                x=c(275, 275, 265, 315, 340, 390, 455,280),
-                                y=c(310,335, 430,400, 450,509,521,370))
-
-    plot_pk <- subset(plot_pk, plot_pk$x > x_min & plot_pk$x < x_max & plot_pk$y > y_min & plot_pk$y < y_max)
-
-    plot <- plot + ggplot2::annotate("text", x = plot_pk$x, y = plot_pk$y, label = plot_pk$peak, size=3.2) +
-      ggplot2::annotate("rect", xmin=254, xmax = 260, ymin = 380, ymax=480, color="black", fill=NA)+
-      ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 300, ymax=320, color="black", fill=NA)+
-      ggplot2::annotate("rect", xmin=330, xmax = 350, ymin = 420, ymax=480, color="black", fill=NA)+
-      ggplot2::annotate("rect", xmin=310, xmax = 320, ymin = 380, ymax=420, color="black", fill=NA)+
-      ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 320, ymax=350, color="black", fill=NA)
-
-  }
+  # if(label_peaks == T){
+  #   plot_pk <- data.frame(peak=c("B", "T", "A", "M", "C", "D", "E","N"),
+  #                               x=c(275, 275, 265, 315, 340, 390, 455,280),
+  #                               y=c(310,335, 430,400, 450,509,521,370))
+  #
+  #   plot_pk <- subset(plot_pk, plot_pk$x > x_min & plot_pk$x < x_max & plot_pk$y > y_min & plot_pk$y < y_max)
+  #
+  #   plot <- plot + ggplot2::annotate("text", x = plot_pk$x, y = plot_pk$y, label = plot_pk$peak, size=3.2) +
+  #     ggplot2::annotate("rect", xmin=254, xmax = 260, ymin = 380, ymax=480, color="black", fill=NA)+
+  #     ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 300, ymax=320, color="black", fill=NA)+
+  #     ggplot2::annotate("rect", xmin=330, xmax = 350, ymin = 420, ymax=480, color="black", fill=NA)+
+  #     ggplot2::annotate("rect", xmin=310, xmax = 320, ymin = 380, ymax=420, color="black", fill=NA)+
+  #     ggplot2::annotate("rect", xmin=270, xmax = 280, ymin = 320, ymax=350, color="black", fill=NA)
+  #
+  # }
   return(plot)
 }
 
