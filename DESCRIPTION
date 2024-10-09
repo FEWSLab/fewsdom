@@ -1,7 +1,7 @@
 Package: fewsdom
 Type: Package
 Title: Tools to Process Data from Horiba Aqualog
-Version: 1.2.2_tests
+Version: 1.2.2-2024-10-09
 Authors@R: c(
   person("Katie A.", "Wampler", email = "katie.wampler@oregonstate.edu", role = c("aut")),
   person("Ryan", "Cole", email = "ryan.cole@oregonstate.edu", role = c("aut", "cre"))
