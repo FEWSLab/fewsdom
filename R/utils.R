@@ -272,8 +272,8 @@ empty_eems <- function(eem, verbose=T){
 
 .write_processing_tracking <- function(text,
                                        tracking_filename = "processing_tracking.txt",
-                                       overwrite = FALSE
-                                       ) {
+                                       overwrite = FALSE,
+                                       ...) {
   # Check that we want to do this otherwise exit the function
   stopifnot(is.character(text))
 
