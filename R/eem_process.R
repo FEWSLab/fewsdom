@@ -67,7 +67,7 @@ eem_proccess <- function(prjpath,
     stop("Invalid file structure, please use 'create_files' function to create file for plots within file directory")
   }
 
-  browser()
+  cat(prjpath, " eem_process\n")
 
   # Create text file to track processing changes
   .write_processing_tracking("",
