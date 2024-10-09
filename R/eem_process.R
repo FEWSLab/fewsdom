@@ -11,7 +11,6 @@
 #' @param blanklist object of class eem or eemlist containing the blanks for the EEMs samples should be the same length as eem
 #' @param abs dataframe containing absorbance data corresponding to the EEMs samples
 #' @param meta dataframe of metadata containing unique ID's, integration time, dilutions, and raman area for each sample, see example metadata for format
-#' @param process_file logical, if TRUE it will put a text file in the processed data folder named 'processing_tracking'
 #' @param replace_blank logical, if TRUE it will find the first sample labeled "blank" or "blk" and use that for blank subtraction, use when instrument blank has errors
 #' @param raman logical, if TRUE will use 'raman' function to remove raman scattering
 #' @param rayleigh logical, if TRUE will use 'rayleigh' function to remove rayleigh scattering
@@ -24,20 +23,20 @@
 #' @param raman_width either "auto" or "manual". If auto is chosen cutting widths will be found using the 'find_cut_width' function
 #' @param rayleigh_mask optional if auto width method is used, a vector of length 4 specifying the width of the rayleigh line to cut, numbers 1:2 are width above and below first order line, numbers 3:4 are width above and below second order line
 #' @param rayleigh_width either "auto" or "manual", if auto is chosen cutting widths will be found using the 'find_cut_width' function
-#' @param ... arguments passed on to scattering functions 'raman' and 'rayleigh'
+#' @param ... arguments passed on to scattering functions 'raman' and 'rayleigh' and 'write_processing_tracking'
 #' @return an list where the first object is of class eemlist with processed EEMs samples. The
 #' second object is a dataframe with the processes absorbance data.
 #' If a process file is given, a file will be created in the processes folder of the file directory
 #' @export
 #' @examples
 #' \dontrun{
-#' data_process <- eem_proccess(prjpath=prjpath, eemlist=X, blanklist=X_blk, abs=Sabs,
-#' process_file=process_file, meta=meta)
+#' data_process <- eem_process(prjpath=prjpath, eemlist=X, blanklist=X_blk, abs=Sabs,
+#'  meta=meta)
 #'
 #' X_clean <- data_process[[1]]
 #' abs_clean <- data_process[[2]]}
 
-eem_proccess <- function(prjpath,
+eem_process <- function(prjpath,
                          eemlist,
                          blanklist,
                          abs,
@@ -66,9 +65,6 @@ eem_proccess <- function(prjpath,
   if(!file.exists(paste(prjpath,  "/5_Processed", sep=""))){
     stop("Invalid file structure, please use 'create_files' function to create file for plots within file directory")
   }
-
-  cat(prjpath, " eem_process\n")
-
   # Create text file to track processing changes
   .write_processing_tracking("",
                              overwrite = TRUE)
@@ -102,36 +98,42 @@ eem_proccess <- function(prjpath,
 
   # Write instrument blank replacement to processing tracking
   if(replace_blank == T){
-    .write_processing_tracking("Instrument blank not accepted. Instrument blank was substituted by the first sample blank")
+    .write_processing_tracking( "Instrument blank not accepted. Instrument blank was substituted by the first sample blank")
   } else{
-    .write_processing_tracking("Instrument blank accepted and used for subtraction")
+    .write_processing_tracking( "Instrument blank accepted and used for subtraction")
   }
 
   # Throw an error if there's empty eems
   if(length(empty_eems(X_sub, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after blank subtraction, use 'empty_eems' function to find out which ones")
   }
-  .write_processing_tracking("Blank was subtracted from samples")
+  .write_processing_tracking( "Blank was subtracted from samples")
 
   # Remove blank that was used as instrument blank so code won't break during plotting
   if(replace_blank ==T){
     blank <- eemlist[[which(stringr::str_detect(meta$unique_ID, "BLK|blk|blank|blank|BLANK") == T)[1]]]
     X_sub <- eem_exclude(X_sub, exclude=list(ex=c(), em=c(), sample=blank$sample) )
-    .write_processing_tracking("instrument blank was subsituted for the first run blank")
+    .write_processing_tracking( "instrument blank was subsituted for the first run blank")
   }
 
   # Scattering ----
   # Remove raman scattering
   X_mask <- X_sub
   if(raman){
-    X_mask <- raman(X_mask, process_file=process_file_name, raman_width=raman_width,
-                    raman_mask = raman_mask,...)
+    X_mask <- raman(X_mask,
+                    raman_width=raman_width,
+                    raman_mask = raman_mask,
+
+                    ...)
   }
 
   # Remove rayleigh scattering
   if(rayleigh){
-    X_mask <- rayleigh(X_mask, process_file=process_file_name,
-                       rayleigh_width = rayleigh_width, rayleigh_mask=rayleigh_mask,...)
+    X_mask <- rayleigh(X_mask,
+                       rayleigh_width = rayleigh_width,
+                       rayleigh_mask=rayleigh_mask,
+
+                       ...)
   }
   if(length(empty_eems(X_mask, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after removing scattering, try setting rayleigh_width to 'manual'")
@@ -141,10 +143,10 @@ eem_proccess <- function(prjpath,
   if(IFE==T){
     #clip eem to be able to remove inner filtering effects
     X_ife <- eemR::eem_cut(X_mask, em=600:1000, ex=600:1000, exact=F)
-    .write_processing_tracking("EEM's were clipped to just emission wavelengths under 600 nm")
+    .write_processing_tracking( "EEM's were clipped to just emission wavelengths under 600 nm")
 
     X_ife <- eem_inner_filter_effect(X_ife, absorbance=abs)
-      .write_processing_tracking("EEM's were corrected for inner filter effects")
+      .write_processing_tracking( "EEM's were corrected for inner filter effects")
     if(length(empty_eems(X_ife, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after correcting for inner filter effects, use 'empty_eems' function to find out which ones")
     }
@@ -165,7 +167,8 @@ eem_proccess <- function(prjpath,
     if(length(empty_eems(X_norm, verbose=F)) >0){
       stop("one or more of your EEMs has empty data after normalizing for raman area, use 'empty_eems' function to find out which ones")
     }
-    .write_processing_tracking("EEM's were normalized by Raman area")
+    .write_processing_tracking(
+                               "EEM's were normalized by Raman area")
   }
 
   # Account for dilutions ----
@@ -178,8 +181,8 @@ eem_proccess <- function(prjpath,
     })
     class(X_dil_cor) <- "eemlist"
     attr(abs, "is_dil_corrected") <- TRUE
-    .write_processing_tracking("EEM's were corrected for dilutions")
-    .write_processing_tracking("Absorbance was corrected for dilutions")
+    .write_processing_tracking( "EEM's were corrected for dilutions")
+    .write_processing_tracking( "Absorbance was corrected for dilutions")
 
     if(sum(meta$dilution != 1) > 0){
       dil_data <- meta %>% select(dilution) #invert to match function
@@ -205,7 +208,7 @@ eem_proccess <- function(prjpath,
   # Clips un-normalized eem ----
   X_clip <- X_dil_cor
   X_clip<- eem_cut2(X_clip, ex=ex_clip, em=em_clip, exact=F)
-  .write_processing_tracking(paste0("DOC Normalized EEM's were clipped to Excitation:",
+  .write_processing_tracking( paste0("DOC Normalized EEM's were clipped to Excitation:",
                              ex_clip[1], " to ", ex_clip[2],  " nm and Emission:",
                              em_clip[1]," to ", em_clip[2], " nm"))
   if(length(empty_eems(X_clip, verbose=F)) >0){

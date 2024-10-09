@@ -191,7 +191,7 @@ empty_eems <- function(eem, verbose=T){
 #'
 #' @return text string with fewsdom package version
 .fewsdom_ver <- function() {
-  paste0("fewsdom_", packageVersion("fewsdom"))
+  paste0("fewsdom_", utils::packageVersion("fewsdom"))
   }
 
 #' Generate spectral index documenation for
@@ -271,22 +271,18 @@ empty_eems <- function(eem, verbose=T){
 }
 
 .write_processing_tracking <- function(text,
-                                       tracking_filename = "processing_tracking.txt",
-                                       overwrite = FALSE,
-                                       ...) {
-  cat(prjpath, " .write_processing_tracking\n")
+                                       overwrite = FALSE) {
+
+  tracking_file <- get_tracking_file()
   # Check that we want to do this otherwise exit the function
-  stopifnot(is.character(text))
+  stopifnot(is.character(text) | !is.null(tracking_file))
 
   #create text file to track processing changes
-  tracking_path <- file.path(prjpath,
-                             "5_Processed",
-                             tracking_filename)
   if (overwrite) {
     # If the file should be overwritten (new processing run), create a new file
-    file.create(tracking_path)
+    file.create(tracking_file)
     write(paste0("PROCESSING STEPS ON ", round(Sys.time(), "secs"), " using ", .fewsdom_ver()),
-          file = tracking_path)
+          file = tracking_file)
   } else {
     # This case we just append a new line to the end of the file with the text
     line_write <- paste(round(Sys.time(),
@@ -294,7 +290,7 @@ empty_eems <- function(eem, verbose=T){
                         text,
                         sep = " - ")
     write(line_write,
-          file = tracking_path,
+          file = tracking_file,
           append = TRUE)
   }
 
@@ -322,4 +318,6 @@ empty_eems <- function(eem, verbose=T){
              n_response)
   }
 }
+
+
 

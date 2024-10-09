@@ -42,7 +42,7 @@ validate_tea_absorbance <- function(abs_df,
 
     # Load in tea absorbance model data.frame
     if (model == "default") {
-      model_abs <- tea_absorbance_model }
+      model_abs <- fewsdom::tea_absorbance_model }
     else if(file_ext(model) == "csv") {
       model_abs <- read.csv(model)
     } else {
@@ -109,11 +109,13 @@ validate_tea_absorbance <- function(abs_df,
                              "Processing Aborted by user. Tea standard failed validation.")
         # Writing the response to processing_tracking.txt
         if(response) {
-          .write_processing_tracking(paste0("User warned sample",
+          .write_processing_tracking( 
+                                     paste0("User warned sample",
                                             sample,
                                             " FAILED absorbance validation checks, but ok'd to continue"))
         } else {
-          .write_processing_tracking("Processing Aborted by user. Tea standard failed validation.")
+          .write_processing_tracking( 
+                                     "Processing Aborted by user. Tea standard failed validation.")
 
           stop("Processing Aborted by user. Tea standard failed validation.")
         }
@@ -153,21 +155,21 @@ plot_absorbance_error <- function(model_data,
   all_data <- cbind(model_data, sample_abs_vector)
 
   # Plotting Code
-  abs_plot <- ggplot(all_data) +
-    geom_line(aes(x = wavelength,
-                  y = sample_abs_vector),
+  abs_plot <- ggplot2::ggplot(all_data) +
+    ggplot2::geom_line(aes(x = .data$wavelength,
+                           y = .data$sample_abs_vector),
               color = "red") +
-    geom_line(aes(x = wavelength,
-                  y = mean_abs_by_wavelength),
+    ggplot2::geom_line(aes(x = .data$wavelength,
+                           y = .data$mean_abs_by_wavelength),
               color = "black") +
-    geom_ribbon(aes(x = wavelength,
-                    ymin = sdmin_3x,
-                    ymax = sdmax_3x),
+    ggplot2::geom_ribbon(aes(x = .data$wavelength,
+                             ymin = .data$sdmin_3x,
+                             ymax = .data$sdmax_3x),
                 alpha = 0.15) +
-    labs(y = "Absorbance",
+    ggplot2::labs(y = "Absorbance",
          x = "Wavelength (nm)",
          title = paste0(sample_name, " - ", condition)) +
-    theme_bw()
+    ggplot2::theme_bw()
 
   plot(abs_plot)
 }

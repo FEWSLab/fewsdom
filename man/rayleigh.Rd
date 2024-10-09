@@ -9,7 +9,6 @@ rayleigh(
   rayleigh_mask = c(20, 10, 10, 10),
   rayleigh_width = "auto",
   rayleigh_interp = c(F, F),
-  process_file = NULL,
   verbose = F,
   ...
 )
@@ -23,9 +22,9 @@ rayleigh(
 
 \item{rayleigh_interp}{a vector of length two, either T or F, specifying whether the first and second order lines should be interpolated, the first position refers to the first order line, the way the code is written you cannot interpolate the first order line and not the second}
 
-\item{process_file}{a file path to a .txt file, used to track processing changes to EEMs}
-
 \item{verbose}{a logical, if TRUE will print out widths used to mask via the auto width method}
+
+\item{...}{additional arguments passed to the 'eem_interp' function}
 }
 \description{
 Will remove both first and second order rayleigh scattering with the option to interpolate

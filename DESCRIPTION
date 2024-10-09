@@ -32,7 +32,8 @@ Imports:
     reader,
     readxl,
     staRdom,
-    magrittr
+    magrittr,
+    utils
 RoxygenNote: 7.3.2
 LazyData: true
 Depends: 
