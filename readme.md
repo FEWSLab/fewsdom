@@ -16,8 +16,11 @@ Maybe - can I amalgamate all the known stream water DOC samples to create a know
 -[x] make the writing to processing_tracking.txt it's own function to make code easier to read
 -[] Figure out what eem_interp is doing. 
   - maybe I can use this function to find the spikes in the EEMs? or at least it might help think about what 3D eem processing steps can help with the validation
+-[] add blank plotting and force user to accept before processing
+-[] create a model of blank absorbance and fluorescence from good data
+
 
 
 ## Qs for Katie
 - why drop S290-350 from calculations?
-- 
+- Should I remove all data below the 1st order Rayleigh line? 

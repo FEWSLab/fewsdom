@@ -97,10 +97,19 @@ eem_proccess <- function(prjpath,
     return(X_sub[[n]])
   }, replace_blank=replace_blank)
   class(X_sub) <- "eemlist"
+
+  # Write instrument blank replacement to processing tracking
+  if(replace_blank == T){
+    .write_processing_tracking("Instrument blank not accepted. Instrument blank was substituted by the first sample blank")
+  } else{
+    .write_processing_tracking("Instrument blank accepted and used for subtraction")
+  }
+
+  # Throw an error if there's empty eems
   if(length(empty_eems(X_sub, verbose=F)) >0){
     stop("one or more of your EEMs has empty data after blank subtraction, use 'empty_eems' function to find out which ones")
   }
-  .write_processing_tracking("blanks were subtracted from samples")
+  .write_processing_tracking("Blank was subtracted from samples")
 
   # Remove blank that was used as instrument blank so code won't break during plotting
   if(replace_blank ==T){
