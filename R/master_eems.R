@@ -45,36 +45,60 @@
 #'
 #' @export
 #'
-run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
-                         doc_column=7, name_column=4, nskip=3,
-                         doc_delim="-", meta_sheet="log", site_loc=c(1,7),
-                          process_file=T, ...){
-  meta_file <- paste(prjpath,"/", meta_name, sep="")
+run_eems <- function(prjpath,
+                     meta_name,
+                     get_doc=F,
+                     doc_file,
+                     doc_sheet,
+                     doc_column=7,
+                     name_column=4,
+                     nskip=3,
+                     doc_delim="-",
+                     meta_sheet="log",
+                     site_loc=c(1,7),
+                     process_file=T,
+                     ...){
+
+  # Get the meta file path
+  meta_file <- file.path(prjpath, meta_name)
+
 
   if(get_doc == T){
-
     # Add code to append prjpath to DOC file (in case it's a relative path)
     doc_file <- file.path(prjpath,
                           doc_file)
     meta <- get_doc(doc_file=doc_file,
-                    doc_sheet=doc_sheet, doc_column=doc_column,
-                    name_column=name_column, nskip=nskip,
-                    doc_delim=doc_delim, meta_file=meta_file,
-                    meta_sheet=meta_sheet, site_loc=site_loc, ...)
+                    doc_sheet=doc_sheet,
+                    doc_column=doc_column,
+                    name_column=name_column,
+                    nskip=nskip,
+                    doc_delim=doc_delim,
+                    meta_file=meta_file,
+                    meta_sheet=meta_sheet,
+                    site_loc=site_loc,
+                    ...)
   }
 
+  # create the tracking file path in environment - can I find this one?
+  set_tracking_file(file.path(prjpath,
+                             "5_Processed",
+                             "processing_tracking.txt"))
 
   #rename files and create and put in folders
   cat("Renaming files and putting in files \n")
-  meta <- clean_files(prjpath=prjpath, meta_file=meta_file,
-                      meta_sheet = meta_sheet,...)
+  meta <- clean_files(prjpath,
+                      meta_file,
+                      meta_sheet,
+                      ...)
 
   #convert absorbance files from .dat to .csv
-  abs_preprocess(prjpath=prjpath, "mixed", meta)
+  abs_preprocess(prjpath,
+                 "mixed",
+                 meta)
 
   #Load Data in R
   cat("Loading data in R \n")
-  data<- load_eems(prjpath = prjpath)
+  data<- load_eems(prjpath)
   X <- data[[1]]
   X_blk <- data[[2]]
   Sabs <- data[[3]]
@@ -99,8 +123,12 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
 
   ## Process the EEM's
   cat("Processing EEMs and absorbance data \n")
-  data_process <- eem_proccess(prjpath=prjpath, eemlist=X, blanklist=X_blk, abs=Sabs,
-                               process_file=process_file, meta=meta,
+  data_process <- eem_process(prjpath = prjpath,
+                               eemlist = X,
+                               blanklist = X_blk,
+                               abs = Sabs,
+                               process_file = process_file,
+                               meta = meta,
                                replace_blank = blank_validation,
                                ...)
   X_clean <- data_process[[1]]  #returns non doc normalized data
@@ -109,26 +137,43 @@ run_eems <- function(prjpath, meta_name, get_doc=F, doc_file, doc_sheet,
   ## Validation checks on the EEMs and Absorbance data
   # These will raise warnings if some of the absorbances are weird or if the
   cat("Validating check standards \n")
-  tea_abs_check <- validate_tea_absorbance(abs_clean)
+  tea_abs_check <- validate_tea_absorbance(abs_clean,
+                                           ...)
 
   ## Report the Data
   cat("Reporting EEMs and absorbance data \n")
 
   #create plots
-  plot_eems(prjpath = prjpath, meta=meta, eem=X_clean, doc_norm=F, ...)
+  plot_eems(prjpath = prjpath,
+            meta = meta,
+            eem=X_clean,
+            doc_norm = FALSE,
+            ...)
 
   if(sum(is.na(meta$DOC_mg_L)) < nrow(meta)){
-    plot_eems(prjpath = prjpath, meta=meta, eem=X_clean, doc_norm=T,
-              save_names="_DOC", ...)
+    plot_eems(prjpath = prjpath,
+              meta=meta,
+              eem=X_clean,
+              doc_norm = TRUE,
+              save_names="_DOC",
+              ...)
   }
 
 
   #save indices
-  get_indices(X_clean, abs_clean, meta, prjpath=prjpath, doc_norm="both",
-              sampsascol=F, waves=NULL)
+  get_indices(X_clean,
+              abs_clean,
+              meta,
+              prjpath = prjpath,
+              doc_norm = "both",
+              sampsascol = FALSE,
+              waves=NULL)
 
   #save raw files (eems, abs)
-  save_eems(X_clean, abs_clean, meta, prjpath=prjpath)
+  save_eems(X_clean,
+            abs_clean,
+            meta,
+            prjpath = prjpath)
 
   cat(" \n EEM's have been successfully processed. Look in the 5_Processed folder for plots and indices \n")
 

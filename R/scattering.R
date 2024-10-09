@@ -223,6 +223,7 @@ find_cut_width <- function(eem, type="rayleigh", order=1){
 #' @param rayleigh_width either "auto" or "manual", if auto is chosen cutting widths will be found using the 'find_cut_width' function
 #' @param rayleigh_interp a vector of length two, either T or F, specifying whether the first and second order lines should be interpolated, the first position refers to the first order line, the way the code is written you cannot interpolate the first order line and not the second
 #' @param verbose a logical, if TRUE will print out widths used to mask via the auto width method
+#' @param ... additional arguments passed to the 'eem_interp' function
 #' @export
 
 rayleigh <- function(eem,
@@ -253,7 +254,8 @@ rayleigh <- function(eem,
   )
   if(rayleigh_interp[2] == T){
     eem_rm <- eem_interp(data=eem_rm, ...)
-    .write_processing_tracking("Second order Rayleigh scattering filled via interpolation")
+    .write_processing_tracking(
+                               "Second order Rayleigh scattering filled via interpolation")
   }
 
   #first order rayleigh
@@ -265,7 +267,8 @@ rayleigh <- function(eem,
 
   if(rayleigh_interp[1] == T){
     eem_rm <- eem_interp(data=eem_rm, ...)
-    .write_processing_tracking("First order Rayleigh scattering filled via interpolation")
+    .write_processing_tracking(
+                               "First order Rayleigh scattering filled via interpolation")
   }
   return(eem_rm)
 }
@@ -282,6 +285,7 @@ rayleigh <- function(eem,
 #' @param raman_width either "auto" or "manual". If auto is chosen cutting widths will be found using the 'find_cut_width' function
 #' @param raman_interp a vector of length two, either T or F, specifying whether the first and second order lines should be interpolated, the first position refers to the first order line, the way the code is written you cannot interpolate the first order line and not the second
 #' @param verbose a logical, if TRUE will print out widths used to mask via the auto width method
+#' @param ... additional arguments passed to the 'eem_interp' function or '.write_processing_tracking'
 #' @export
 
 raman <- function(eem,
@@ -314,7 +318,8 @@ raman <- function(eem,
   }
   if(raman_interp[2] == T){
     eem_rm <- eem_interp(data = eem_rm, ...)
-    .write_processing_tracking("Second order Raman scattering filled via interpolation")
+    .write_processing_tracking(
+                               "Second order Raman scattering filled via interpolation")
   }
   #first order raman
   eem_rm <- eem_remove_scattering2(eem=eem_rm, type="raman", order=1, up_width = raman_mask[1], down_width = raman_mask[2])
@@ -385,7 +390,7 @@ eem_interp <- function (data,
 #                                    ...
                                     ),
                      t(zoo::na.approx(t(eem$x),
-                                      ...
+#                                      ...
                                       ))) %>%
         array(c(nrow(eem$x), ncol(eem$x),2)) %>%
         apply(1:2, mean, na.rm = TRUE)

@@ -9,11 +9,14 @@ ggeem2(
   manualscale = F,
   manualmax = 1.5,
   manualmin = 0,
+  scalefunc = "linear",
+  plot_type = "contour",
   nbins = 8,
   label_peaks = F,
   prec = 2,
   palette = "parula",
-  z_unit = "RU"
+  z_unit = "RU",
+  plot_title = FALSE
 )
 }
 \arguments{
@@ -25,6 +28,10 @@ ggeem2(
 
 \item{manualmin}{minimum value used for intensity scale}
 
+\item{scalefunc}{function of how to scale the colors. log or linear}
+
+\item{plot_type}{string specifying if the user wants a contour or raster plot. default "contour"}
+
 \item{nbins}{the number of bins (and colors) used in the contour plot, maximum of 24}
 
 \item{label_peaks}{a logical indicating if you want the main coble peaks annotated on the plot}
@@ -34,6 +41,8 @@ ggeem2(
 \item{palette}{a character with the color palette to use. Currently 'parula', 'ocean.haline', 'cubicl', and 'kovesi.rainbow' from the 'pals' package are supported (and custom 'katie_pal')}
 
 \item{z_unit}{either "RU" or "DOC", use "RU" for raman normalized data and "DOC" for raman and DOC normalized data}
+
+\item{plot_title}{logical - set to true if you want the plot title on the plot (mostly for interactive use)}
 }
 \value{
 If class is eem, will return a single plot, if class is an eemlist will return a list of plots
