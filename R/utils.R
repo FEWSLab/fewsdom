@@ -277,6 +277,8 @@ empty_eems <- function(eem, verbose=T){
   # Check that we want to do this otherwise exit the function
   stopifnot(is.character(text))
 
+  browser()
+
   #create text file to track processing changes
   tracking_path <- file.path(prjpath,
                              "5_Processed",
