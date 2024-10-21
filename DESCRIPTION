@@ -1,14 +1,14 @@
 Package: fewsdom
 Type: Package
 Title: Tools to Process Data from Horiba Aqualog
-Version: 1.2.2-2024-10-09
+Version: 1.2.2
 Authors@R: c(
   person("Katie A.", "Wampler", email = "katie.wampler@oregonstate.edu", role = c("aut")),
   person("Ryan", "Cole", email = "ryan.cole@oregonstate.edu", role = c("aut", "cre"))
   )
 Description: Collection of functions used to process raw data collected 
     from a Horiba Aqualog, output cleaned data, indicies, and plots.
-Date: 2024-09-25
+Date: 2024-10-21
 License: GPL-3
 Encoding: UTF-8
 Imports:
