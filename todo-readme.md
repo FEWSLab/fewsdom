@@ -13,14 +13,19 @@ README for the validation checks of EEMs data
 Maybe - can I amalgamate all the known stream water DOC samples to create a known range of absorbance and EEMs for these? This will be more work than doing the tea and blanks.
 
 ## TODOs
+
+### Validation checks
 -[x] make the writing to processing_tracking.txt it's own function to make code easier to read
 -[] Figure out what eem_interp is doing. 
   - maybe I can use this function to find the spikes in the EEMs? or at least it might help think about what 3D eem processing steps can help with the validation
 -[] add blank plotting and force user to accept before processing
 -[] create a model of blank absorbance and fluorescence from good data
 
+### Package environment parameter refactoring
+-[] Put all the parameters into an environment that can be found by all functions in the package
+-[] rewrite main processing functions to run with the processing environment data to simplify arguments and function calls
 
 
 ## Qs for Katie
 - why drop S290-350 from calculations?
-- Should I remove all data below the 1st order Rayleigh line? 
+- Should I remove all data below the 1st order Rayleigh line?
