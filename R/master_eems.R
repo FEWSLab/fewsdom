@@ -47,7 +47,7 @@
 #'
 run_eems <- function(prjpath,
                      meta_name,
-                     get_doc=F,
+                     get_doc=F, # TODO - remove this and make the logic based on if DOC_file is NULL
                      doc_file,
                      doc_sheet,
                      doc_column=7,
@@ -55,15 +55,18 @@ run_eems <- function(prjpath,
                      nskip=3,
                      doc_delim="-",
                      meta_sheet="log",
-                     site_loc=c(1,7),
+                     site_loc=c(1,7), # TODO - do we really need this?
                      process_file=T,
                      ...){
+
+  # TODO Get all the parameters from .pkgenv
+
 
   # Get the meta file path
   meta_file <- file.path(prjpath, meta_name)
 
 
-  if(get_doc == T){
+  if(!is.null(doc_file)){
     # Add code to append prjpath to DOC file (in case it's a relative path)
     doc_file <- file.path(prjpath,
                           doc_file)
