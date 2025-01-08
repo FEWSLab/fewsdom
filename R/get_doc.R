@@ -13,10 +13,9 @@
 #'
 #' @param doc_file a string of the file path of the DOC file, can be .xlsx or .csv
 #' @param doc_sheet a string of the sheet name of the DOC results, only required if the DOC file is an .xlsx file
-#' @param doc_column a numeric indicating which column the DOC results are stored in in the DOC file
-#' @param name_column a numeric indicating which column the sample/site names are stored in the DOC file
+#' @param doc_column a numeric or string indicating which column the DOC results are stored in in the DOC file. Defaults to "Result.NPOC." since this is what our Shimadzu exports call it
+#' @param id_column a numeric indicating which column the unique sample identifiers are stored in the DOC file. Defaults to "Sample.ID" since this is what our Shimadzu exports call it
 #' @param nskip a numeric indicating a number of lines to skip when reading in the DOC file, optional
-#' @param doc_delim a string indicating the separation between site name and other identifiers in the DOC data, it will only keep the first piece
 #'
 #' @param meta_file a string indicating the file path of the metadata, can be .xlsx or .csv
 #' @param meta_sheet a string of the metadata sheet name, only required if the metadata file is an .xlsx file
@@ -25,10 +24,17 @@
 #' @param ... arguments to pass down to functions with 'get_doc'
 #' @export
 
-get_doc <- function(doc_file, doc_sheet=NULL, doc_column, name_column, nskip=0, doc_delim="-",
-                    meta_file, meta_sheet=NULL, site_loc=c(1,7), rewrite=T, ...){
-  stopifnot(is.character(c(doc_file, doc_delim, meta_file)) |
-              is.numeric(c(doc_column, name_column, nskip, site_loc))| file.exists(doc_file)|
+get_doc <- function(doc_file,
+                    doc_sheet=NULL,
+                    doc_column="Result.NPOC.",
+                    id_column="Sample.ID",
+                    nskip = 0,
+                    meta_file,
+                    meta_sheet=NULL,
+                    rewrite=T,
+                    ...){
+  stopifnot(is.character(c(doc_file, meta_file)) |
+              file.exists(doc_file)|
               file.exists(meta_file))
 
   #read in doc data
@@ -52,11 +58,13 @@ get_doc <- function(doc_file, doc_sheet=NULL, doc_column, name_column, nskip=0, 
     }
 
   #condense to just DOC data
-    doc_result <- doc_result[,c(name_column, doc_column)]
-    colnames(doc_result) <- c("Site", "DOC")
+    doc_result <- doc_result[,c(id_column, doc_column)]
+    colnames(doc_result) <- c("sample_id", "DOC")
 
   #clean site names, we submit samples to the lab with date and time stamps, but we match just site name (for now)
-    doc_result$Site <- sapply(stringr::str_split(doc_result$Site, doc_delim),"[[",1)
+  # doc_result$Site <- sapply(stringr::str_split(doc_result$Site, doc_delim),"[[",1)
+
+  # Match data_identifier (Aqualog default) to Sample.ID (shimadzu default)
 
   #load metadata
     if(stringr::str_detect(meta_file, ".xlsx")){
@@ -65,15 +73,14 @@ get_doc <- function(doc_file, doc_sheet=NULL, doc_column, name_column, nskip=0, 
       meta <- read.csv(doc_file)
     }
 
-  #clean meta names
-    meta$Site <- substr(meta$data_identifier, site_loc[1], site_loc[2])
+  #clean meta names - Commenting this our as its unnecessary and probably makes bugs
+  # meta$Site <- substr(meta$data_identifier, site_loc[1], site_loc[2])
 
   #Put DOC in metadata
-    meta$DOC_mg_L <- doc_result$DOC[match(meta$Site, doc_result$Site)]
-    meta$DOC_mg_L <- as.numeric(meta$DOC_mg_L) #ensure it's a numeric not character
+    meta$DOC_mg_L <- as.numeric(doc_result$DOC[match(meta$data_identifier, doc_result$sample_id)])
 
   #remove site column
-    meta <- meta[,-which(colnames(meta) == "Site")]
+  # meta <- meta[,-which(colnames(meta) == "Site")]
 
     #check it "worked"
     if(sum(is.na(meta$DOC_mg_L)) == nrow(meta)){
